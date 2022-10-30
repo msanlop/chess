@@ -13,7 +13,7 @@ function Square(props : any) {
 
 
     return (
-        <div className="tile" style={style}>
+        <div className="tile" style={style} onClick={e => props.onClick(x, y)}>
             {props.coords}
         </div>
     )
