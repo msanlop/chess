@@ -19,7 +19,7 @@ function Board() {
                     const [x,y] = [index%boardSide, index/boardSide >> 0]
 
                     return (
-                        <div>
+                        <div key={index}>
                             <Square coords={[x,y]} />
                         </div>
                     )
