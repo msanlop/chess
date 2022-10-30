@@ -14,7 +14,8 @@ function Square(props : any) {
 
     return (
         <div className="tile" style={style} onClick={e => props.onClick(x, y)}>
-            {props.coords}
+            
+            {props.piece === null ? <br></br> : props.piece.color + props.piece.piece}
         </div>
     )
 }

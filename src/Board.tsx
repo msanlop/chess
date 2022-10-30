@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Key, useState } from "react";
 import Square from "./Square";
 import './Board.css'
 import { isPropertySignature } from "typescript";
@@ -8,23 +8,20 @@ const boardSide = 8
 
 function Board(props:any) {
 
-    const [tiles, setTiles] = useState(new Array(64).fill(null))
-    
-    // 
-
     return (
         <div className="chess-board">
             <ul>
-                {tiles.map( (piece, index) => {
+                {props.tiles.map( (piece: object, index: number) => {
                     const [x,y] = [index%boardSide, index/boardSide >> 0]
 
                     return (
-                        <div key={index}>
+                        <li key={index}>
                             <Square 
-                                coords={[x,y]} 
+                                coords={[x,y]}
+                                piece={piece} 
                                 onClick={props.onClick}
                             />
-                        </div>
+                        </li>
                     )
                     }
                 )}

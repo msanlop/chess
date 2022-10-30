@@ -1,2 +1,5 @@
 .tile {
+    list-style-type: none;
+    width: 70px;
+    height: 70px;
 }
