@@ -1,0 +1,10 @@
+.chess-board {
+    /* width: 500px;
+    height: 500px; */
+}
+
+
+ul {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+}
