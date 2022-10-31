@@ -8,17 +8,19 @@ const boardSide = 8
 
 function Board(props:any) {
 
+
     return (
         <div className="chess-board">
             <ul>
-                {props.tiles.map( (piece: object, index: number) => {
+                {props.tiles.map( (piece: any, index: number) => {
                     const [x,y] = [index%boardSide, index/boardSide >> 0]
 
                     return (
                         <li key={index}>
                             <Square 
-                                coords={[x,y]}
-                                piece={piece} 
+                                coords={{x,y}}
+                                piece={piece}
+                                highlighted={props.highlighted[index]}
                                 onClick={props.onClick}
                             />
                         </li>
