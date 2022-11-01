@@ -11,22 +11,22 @@ wp:wp:wp:wp:wp:wp:wp:wp:\
 wr:wk:wb:wq:wK:wb:wk:wr`
 
 interface Piece {
-    type: string;
-    color: string;
+    readonly type: string;
+    readonly color: string;
 }
 
 export interface Coordinate {
-    x : number;
-    y : number;
+    readonly x : number;
+    readonly y : number;
 }
 
 export interface Board {
-    board : (Piece | null)[];
+    readonly board : (Piece | null)[];
 }
 
 interface GameState {
-    turn : string; // boolean?
-    board : (Piece | null)[];
+    readonly turn : string; // boolean?
+    readonly board : (Piece | null)[];
     // times ?: number; //timers??
 }
 
