@@ -11,7 +11,7 @@ wp:wp:wp:wp:wp:wp:wp:wp:\
 wr:wk:wb:wq:wK:wb:wk:wr`
 
 interface Piece {
-    piece: string;
+    type: string;
     color: string;
 }
 
@@ -36,13 +36,13 @@ const strides : Map<string, number[][]> = new Map([
 
 
 const deserialize = (pos : string) => {
-    return pos.split(":").map(p => {
+    return pos.split(":").map(p => {        
         if(p.length === 0) {return null}
-        return {piece:p[1], color: p[0]}
+        return {type:p[1], color: p[0]}
     })
 }
 
-const starterPosition : ({piece: string, color: string} | null)[] = deserialize(starterPositionSerialized)
+const starterPosition : (Piece | null)[] = deserialize(starterPositionSerialized)
 
 export const getPiece = (coords : Coordinate, state : GameState) => {
     const {x, y} = coords;
@@ -60,7 +60,7 @@ export const getAllowedMoves = (coords : Coordinate, state : GameState) => {
     
     const moves : boolean[] = new Array(BOARD_SIZE ** 2).fill(false)
     const {x, y} = coords;
-    const strideArray = strides.get(piece.piece)    
+    const strideArray = strides.get(piece.type)    
     if(!strideArray){return []}
 
     for (const stride of strideArray) {

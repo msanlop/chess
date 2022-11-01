@@ -6,7 +6,7 @@ import { reduceEachLeadingCommentRange } from "typescript";
 
 
 interface TileInformation {
-    piece : {piece: string, color : string};
+    piece : {type: string, color : string};
     coords : Coordinate;
     onClick : (coords: Coordinate) => void;
     highlighted : boolean;
@@ -38,7 +38,7 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
             onClick={e => props.onClick(props.coords)}
         >
             
-            {props.piece === null ? <br></br> : props.piece.color + props.piece.piece}
+            {props.piece === null ? <br></br> : props.piece.color + props.piece.type}
         </div>
     )
 }
