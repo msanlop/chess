@@ -35,7 +35,7 @@ const strides : Map<string, number[][]> = new Map([
 ])
 
 
-const deserialize = (pos : string) => {
+const deserialize = (pos : string) : (Piece | null)[] => {
     return pos.split(":").map(p => {        
         if(p.length === 0) {return null}
         return {type:p[1], color: p[0]}
@@ -44,7 +44,7 @@ const deserialize = (pos : string) => {
 
 const starterPosition : (Piece | null)[] = deserialize(starterPositionSerialized)
 
-export const getPiece = (coords : Coordinate, state : GameState) => {
+export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null) => {
     const {x, y} = coords;
     
     return state.board[x + y*BOARD_SIZE];
@@ -54,7 +54,7 @@ const isGameFinished = () => {
     return false
 }
 
-export const getAllowedMoves = (coords : Coordinate, state : GameState) => {    
+export const getAllowedMoves = (coords : Coordinate, state : GameState) : boolean[] => {    
     const piece = getPiece(coords, state)    
     if(piece === null || piece.color !== state.turn){return [];}
     
