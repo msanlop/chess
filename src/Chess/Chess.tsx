@@ -260,7 +260,17 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
             
             break;
     }        
-    return moves;
+
+    const movesWithoutSelfChecks = moves.map((canMove, index) => {
+        if(!canMove){return false;}
+        const tempBoard = [...state.board]
+        tempBoard[coords.x + BOARD_SIZE*coords.y] = null 
+        tempBoard[index] = piece
+        const tempState = {board: tempBoard, turn:state.turn, check:false}
+        return !isChecked(tempState, piece.color)
+    })
+    
+    return movesWithoutSelfChecks;
 }
 
 /**
