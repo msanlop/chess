@@ -63,10 +63,10 @@ const isOutOfBounds = (coords : Coordinate) : boolean => {
         || coords.y < 0)
 }
 
-export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null) => {
+export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null | undefined) => {
     const {x, y} = coords;
-    if(isOutOfBounds(coords)) {return null;}
-    
+    if(isOutOfBounds(coords)) {return undefined;}
+
     return state.board[x + y*BOARD_SIZE];
 }
 
@@ -96,12 +96,12 @@ const checkIfStepInDirectionAllowedForPiece = (coords : Coordinate, piece : Piec
     let newCoords = {...coords};
     newCoords = {x : newCoords.x + direction[0], y: newCoords.y + direction[1]}
     if(isOutOfBounds(newCoords)){return null;}
-    
+
     if(newCoords.x >= BOARD_SIZE || newCoords.x < 0 || newCoords.y >= BOARD_SIZE || newCoords.y < 0){
         return null;
     }
     const obstaclePiece = getPiece(newCoords, state);
-    if(obstaclePiece !== null){
+    if(obstaclePiece && obstaclePiece !== null){
         //TODO: check if takes is possible
         if(obstaclePiece.color === piece.color){return null}
     }
@@ -126,7 +126,7 @@ const checkAllowedMovesInDirectionForPiece = (maximumSteps : number, coords : Co
 
 export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state : GameState) : boolean[] => {   
     const piece = getPiece(coords, state)    
-    if(piece === null || piece.color !== state.turn){return [];}
+    if(!piece || piece === null || piece.color !== state.turn){return [];}
     
     const moves : boolean[] = new Array(BOARD_SIZE ** 2).fill(false)
     const directionArray = directions.get(piece.type)    
