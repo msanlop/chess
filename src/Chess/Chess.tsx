@@ -56,8 +56,16 @@ const deserialize = (pos : string) : (Piece | null)[] => {
 
 const starterPosition : (Piece | null)[] = deserialize(starterPositionSerialized)
 
+const isOutOfBounds = (coords : Coordinate) : boolean => {
+    return (coords.x >= BOARD_SIZE 
+        || coords.x < 0 
+        || coords.y >= BOARD_SIZE 
+        || coords.y < 0)
+}
+
 export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null) => {
     const {x, y} = coords;
+    if(isOutOfBounds(coords)) {return null;}
     
     return state.board[x + y*BOARD_SIZE];
 }
@@ -87,6 +95,7 @@ const checkIfStepInDirectionAllowedForPiece = (coords : Coordinate, piece : Piec
 : (Coordinate | null) => {
     let newCoords = {...coords};
     newCoords = {x : newCoords.x + direction[0], y: newCoords.y + direction[1]}
+    if(isOutOfBounds(newCoords)){return null;}
     
     if(newCoords.x >= BOARD_SIZE || newCoords.x < 0 || newCoords.y >= BOARD_SIZE || newCoords.y < 0){
         return null;
