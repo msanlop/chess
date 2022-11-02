@@ -70,6 +70,87 @@ export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null
     return state.board[x + y*BOARD_SIZE];
 }
 
+//checks if player who's turn is now is in a check
+const isChecked = (state: GameState) : boolean => {
+    let king;
+    let i = -1;
+    while(!king){
+        i++ //so i is usable after loop
+        const p = state.board[i]
+        if(p === null) {continue;}
+        king = p.color === state.turn && p.type === 'K' ? p : undefined;
+    }
+    const x = i%BOARD_SIZE;
+    const y = Math.floor(i/BOARD_SIZE);
+    //knight checks
+
+    let threatCoords;
+    for(const dir of directions.knight){
+        threatCoords = {x:x+dir[0], y:y+dir[1]}
+        const threatningPiece = getPiece(threatCoords, state)
+        if(threatningPiece && threatningPiece !== null 
+            && threatningPiece.color !== king.color 
+            && threatningPiece.type === 'k'){
+            return true;
+        }
+    }
+
+
+    for(const dir of directions.diagonal){
+        threatCoords = {x:x,y:y}
+        while(true){
+            threatCoords = {x:threatCoords.x + dir[0], y:threatCoords.y + dir[1]}
+            const p = getPiece(threatCoords, state);
+            if(p === null){continue;}
+            if(!p){break;}
+            if(p.color !== king.color &&
+                (p.type === 'b' || p.type === 'q')){
+                    return true;
+                }
+            break;
+            
+        }
+    }
+
+    //OMG COPY PASTE !!!!!! im too lazy to make this clean rn
+    for(const dir of directions.straight){
+        threatCoords = {x:x,y:y}
+        while(true){
+            // let newX = x + dir[0]
+            // let newY = y + dir[1]
+            threatCoords = {x:threatCoords.x + dir[0], y:threatCoords.y + dir[1]}
+            const p = getPiece(threatCoords, state);
+            if(p === null){continue;}
+            if(!p){break;}
+            if(p.color !== king.color &&
+                (p.type === 'r' || p.type === 'q')){
+                    return true;
+                }
+            break;
+            
+        }
+    }
+
+    const pawnDirection = directions.diagonal.filter((tuple) => 
+        ( state.turn === 'b' && tuple[1] > 0 )
+        || ( state.turn === 'w' && tuple[1] < 0 )
+    );
+    debugger
+    for(const dir of pawnDirection){
+        threatCoords = {x:x+dir[0], y:y+dir[1]}
+        const threatningPiece = getPiece(threatCoords, state)
+        if(threatningPiece && threatningPiece !== null 
+            && threatningPiece.color !== king.color 
+            && threatningPiece.type === 'p'){
+                return true;
+        }
+    }
+
+    //TODO: check with pawn and king
+    return false;
+}
+
+
 const isGameFinished = () => {
     return false
 }
@@ -198,8 +279,10 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
     newBoard[from.x + BOARD_SIZE*from.y] = null;
     const newTurn = state.turn === 'w' ? 'b' : 'w';
     
+    const newState = {board:newBoard, turn:newTurn, check:false}
+    const check = isChecked(newState); //TODO: check for actual checks
 
-    return {board:newBoard, turn:newTurn};
+    return check ? {...newState, check:check} : newState;
 }
 
 export {isGameFinished, starterPosition}
