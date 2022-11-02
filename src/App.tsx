@@ -8,14 +8,14 @@ function App() {
 
   const [lastCoords, setLastCoords] = useState({x : 0, y : 0})
   const [tiles, setTiles] = useState(starterPosition)
-  const [highlighted, setHighlighted] = useState(new Array(BOARD_SIZE).fill(false))
+  const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
 
   const onClick = (coords : Coordinate) => {
     setLastCoords({x:coords.x, y:coords.y})
 
-    const moves = getAllowedMoves(coords, {board:tiles, turn:playerTurn});
-    setHighlighted(moves)
+    const moves = getAllowedMovesForPieceAtCoordinate(coords, {board:tiles, turn:playerTurn});
+    setAllowedMoves(moves)
     
   }
 
@@ -27,7 +27,7 @@ function App() {
         <Board 
           onClick={onClick}
           tiles={tiles}
-          highlighted={highlighted}
+          highlighted={allowed}
         />
       </header>
     </div>
