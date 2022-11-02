@@ -84,14 +84,15 @@ const checkIfStepInDirectionAllowedForPiece = (coords : Coordinate, piece : Piec
     if(newCoords.x >= BOARD_SIZE || newCoords.x < 0 || newCoords.y >= BOARD_SIZE || newCoords.y < 0){
         return null;
     }
-    if(getPiece(newCoords, state) !== null){
-        //TODO: check if piece takes
-        return null;
+    const obstaclePiece = getPiece(newCoords, state);
+    if(obstaclePiece !== null){
+        //TODO: check if takes is possible
+        if(obstaclePiece.color === piece.color){return null}
     }
     //TODO: check if move mates itself
     
     movesRef[newCoords.x + BOARD_SIZE*newCoords.y] = true
-    return newCoords;
+    return obstaclePiece === null ? newCoords : null;
 }
 
 
@@ -148,6 +149,24 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
     return moves;
 }
 
+/**
+ * Moves a piece and returns the new game state
+ * 
+ * @param from coordinate of the moving piece
+ * @param to destination of the moving piece
+ * @param state game state
+ * @returns new game state after the move
+ */
+export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameState => {
+    //TODO: check move is allowed for server purposes??
+    const newBoard = [...state.board]
+    const piece = newBoard[from.x + BOARD_SIZE*from.y];
+    newBoard[to.x + BOARD_SIZE*to.y] = piece;
+    newBoard[from.x + BOARD_SIZE*from.y] = null;
+    const newTurn = state.turn === 'w' ? 'b' : 'w';
+    
 
+    return {board:newBoard, turn:newTurn};
+}
 
 export {isGameFinished, starterPosition}

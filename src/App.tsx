@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Board from "./Board"
-import {BOARD_SIZE, Coordinate, getAllowedMoves, starterPosition} from "./Chess/Chess"
+import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosition, move} from "./Chess/Chess"
 
 function App() {
 
@@ -12,10 +12,15 @@ function App() {
   const [playerTurn, setPlayerTurn] = useState('w')
 
   const onClick = (coords : Coordinate) => {
-    setLastCoords({x:coords.x, y:coords.y})
 
-    const moves = getAllowedMovesForPieceAtCoordinate(coords, {board:tiles, turn:playerTurn});
-    setAllowedMoves(moves)
+    if(allowed[coords.x + BOARD_SIZE*coords.y]){
+      setGameState(move(selectedPiece, coords, gameState))
+      setAllowedMoves(new Array(BOARD_SIZE).fill(false))
+    } else {
+      setSelectedPiece({x:coords.x, y:coords.y})
+      const moves = getAllowedMovesForPieceAtCoordinate(coords, gameState);
+      setAllowedMoves(moves)
+    }
     
   }
 
