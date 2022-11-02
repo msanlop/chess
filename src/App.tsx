@@ -6,9 +6,9 @@ import {BOARD_SIZE, Coordinate, getAllowedMoves, starterPosition} from "./Chess/
 
 function App() {
 
-  const [lastCoords, setLastCoords] = useState({x : 0, y : 0})
-  const [tiles, setTiles] = useState(starterPosition)
-  const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE).fill(false))
+  const [selectedPiece, setSelectedPiece] = useState({x : 0, y : 0})
+  const [gameState, setGameState] = useState({board:starterPosition, turn:'w'})
+  const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
 
   const onClick = (coords : Coordinate) => {
@@ -23,10 +23,11 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Last coords used were : ({lastCoords.x} {lastCoords.y})</p>
+        <p>Last coords used were : ({selectedPiece.x} {selectedPiece.y})</p>
+        <p>turn for {gameState.turn}</p>
         <Board 
           onClick={onClick}
-          tiles={tiles}
+          tiles={gameState.board}
           highlighted={allowed}
         />
       </header>
