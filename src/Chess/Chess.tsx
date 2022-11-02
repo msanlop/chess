@@ -71,14 +71,14 @@ export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null
 }
 
 //checks if player who's turn is now is in a check
-const isChecked = (state: GameState) : boolean => {
+const isChecked = (state: GameState, player: string) : boolean => {
     let king;
     let i = -1;
     while(!king){
         i++ //so i is usable after loop
         const p = state.board[i]
         if(p === null) {continue;}
-        king = p.color === state.turn && p.type === 'K' ? p : undefined;
+        king = p.color === player && p.type === 'K' ? p : undefined;
     }
     const x = i%BOARD_SIZE;
     const y = Math.floor(i/BOARD_SIZE);
@@ -280,7 +280,7 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
     const newTurn = state.turn === 'w' ? 'b' : 'w';
     
     const newState = {board:newBoard, turn:newTurn, check:false}
-    const check = isChecked(newState); //TODO: check for actual checks
+    const check = isChecked(newState, newTurn); //TODO: check for actual checks
 
     return check ? {...newState, check:check} : newState;
 }
