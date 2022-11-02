@@ -45,6 +45,13 @@ const directions = {
     knight : [[1, 2],[-1, 2],[1, -2],[-1, -2],[2, 1],[2, -1],[-2, 1],[-2, -1]],
 
 }
+
+const correctPawnDirections = (directions:number[][], color:string) : number[][] => {
+    return directions.filter((tuple) => 
+    ( color === 'b' && tuple[1] > 0 )
+    || ( color === 'w' && tuple[1] < 0 )
+);
+}
     
 
 const deserialize = (pos : string) : (Piece | null)[] => {
@@ -131,11 +138,7 @@ const isChecked = (state: GameState, player: string) : boolean => {
         }
     }
 
-    const pawnDirection = directions.diagonal.filter((tuple) => 
-        ( state.turn === 'b' && tuple[1] > 0 )
-        || ( state.turn === 'w' && tuple[1] < 0 )
-    );
-    debugger
+    const pawnDirection = correctPawnDirections(directions.diagonal, state.turn)
     for(const dir of pawnDirection){
         threatCoords = {x:x+dir[0], y:y+dir[1]}
         const threatningPiece = getPiece(threatCoords, state)
@@ -178,18 +181,23 @@ const checkIfStepInDirectionAllowedForPiece = (coords : Coordinate, piece : Piec
     newCoords = {x : newCoords.x + direction[0], y: newCoords.y + direction[1]}
     if(isOutOfBounds(newCoords)){return null;}
 
-    if(newCoords.x >= BOARD_SIZE || newCoords.x < 0 || newCoords.y >= BOARD_SIZE || newCoords.y < 0){
-        return null;
-    }
     const obstaclePiece = getPiece(newCoords, state);
     if(obstaclePiece && obstaclePiece !== null){
-        //TODO: check if takes is possible
         if(obstaclePiece.color === piece.color){return null}
+        //pawn attacks on the front
+        else if(piece.type === 'p'){
+            movesRef[newCoords.x + BOARD_SIZE*newCoords.y] = direction[0] !== 0
+            return null;
+        } else{
+            movesRef[newCoords.x + BOARD_SIZE*newCoords.y] = true
+            return null;
     }
-    //TODO: check if move mates itself
+    }
+    if(piece.type === 'p' && direction[0] !== 0){return null;}
+
     
     movesRef[newCoords.x + BOARD_SIZE*newCoords.y] = true
-    return obstaclePiece === null ? newCoords : null;
+    return newCoords;
 }
 
 
@@ -210,8 +218,6 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
     if(!piece || piece === null || piece.color !== state.turn){return [];}
     
     const moves : boolean[] = new Array(BOARD_SIZE ** 2).fill(false)
-    const directionArray = directions.get(piece.type)    
-    if(!directionArray){return []}
 
     switch (piece.type) {
         case 'k':
@@ -226,15 +232,10 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
             }
             break;
         case 'p':
-            debugger
             //TODO: add en passant
-            for (const direction of [...directions.straight]) {
+            const pawnDirections = correctPawnDirections([...directions.diagonal, ...directions.straight], piece.color)
+            for (const direction of pawnDirections) {
                 let newCoords = {...coords};
-                if(direction[0] !== 0 ||
-                    piece.color === 'w' && direction[1] > 0 
-                    || piece.color === 'b' && direction[1] < 0) {
-                    continue;
-                }
                 const numberOfMoves = pawnIsInStartingPosition(coords, piece, state) ? 2 : 1;
                 checkAllowedMovesInDirectionForPiece(numberOfMoves, coords, piece, state, direction, moves);
             }
