@@ -30,15 +30,22 @@ interface GameState {
     // times ?: number; //timers??
 }
 
-const strides : Map<string, number[][]> = new Map([
-    ['k', [[1, 2],[-1, 2],[1, -2],[-1, -2]]],
-    ['b', [[1,1],[-1,1],[1,-1],[-1,-1]]],
-    ['r', [[1,0],[0,1],[-1,0],[0,-1]]],
-    ['K', [[1,0],[0,1],[-1,0],[0,-1]]],
-    ['p', [[0,1], [0,-1]]],
-    ['q', [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[0,1],[-1,0],[0,-1]]],
-])
+// const directions : Map<string, number[][]> = new Map([
+//     ['k', [[1, 2],[-1, 2],[1, -2],[-1, -2]]],
+//     ['b', [[1,1],[-1,1],[1,-1],[-1,-1]]],
+//     ['r', [[1,0],[0,1],[-1,0],[0,-1]]],
+//     ['K', [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]],
+//     ['p', [[0,1], [0,-1]]],
+//     ['q', [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[0,1],[-1,0],[0,-1]]],
+// ])
 
+const directions = {
+    diagonal : [[1,1],[-1,1],[1,-1],[-1,-1]],
+    straight : [[1,0],[0,1],[-1,0],[0,-1]],
+    knight : [[1, 2],[-1, 2],[1, -2],[-1, -2]],
+
+}
+    
 
 const deserialize = (pos : string) : (Piece | null)[] => {
     return pos.split(":").map(p => {        
@@ -118,32 +125,49 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
 
     switch (piece.type) {
         case 'k':
-            for (const direction of directionArray) {
+            for (const direction of [...directions.knight]) {
                 checkAllowedMovesInDirectionForPiece(1, coords, piece, state, direction, moves);
             }
             break;
         case 'K':
             //TODO: check for castling
-            for(const direction of directionArray){
+            for(const direction of [...directions.diagonal, ...directions.straight]){
                 checkAllowedMovesInDirectionForPiece(1, coords, piece, state, direction, moves);
             }
             break;
         case 'p':
             debugger
             //TODO: add en passant
-            for (const direction of directionArray) {
+            for (const direction of [...directions.straight]) {
                 let newCoords = {...coords};
-                if(piece.color === 'w' && direction[1] > 0 || piece.color === 'b' && direction[1] < 0) {
+                if(direction[0] !== 0 ||
+                    piece.color === 'w' && direction[1] > 0 
+                    || piece.color === 'b' && direction[1] < 0) {
                     continue;
                 }
                 const numberOfMoves = pawnIsInStartingPosition(coords, piece, state) ? 2 : 1;
                 checkAllowedMovesInDirectionForPiece(numberOfMoves, coords, piece, state, direction, moves);
             }
             break;
-        default:
-            for (const direction of directionArray) {
+        case 'b':
+            for(const direction of directions.diagonal){
                 checkAllowedMovesInDirectionForPiece(Infinity, coords, piece, state, direction, moves);                
             }
+            break;
+        case 'r':
+            for(const direction of directions.straight){
+                checkAllowedMovesInDirectionForPiece(Infinity, coords, piece, state, direction, moves);                
+            }
+            break;
+        case 'q':
+            for(const direction of [...directions.diagonal, ...directions.straight]){
+                checkAllowedMovesInDirectionForPiece(Infinity, coords, piece, state, direction, moves);                
+            }
+            break;
+            
+        default:
+            console.log("DEFAULT MOVE TAKEN");
+            
             break;
     }        
     return moves;
