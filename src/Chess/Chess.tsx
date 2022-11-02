@@ -59,27 +59,91 @@ const isGameFinished = () => {
     return false
 }
 
-export const getAllowedMoves = (coords : Coordinate, state : GameState) : boolean[] => {    
+
+const pawnIsInStartingPosition = (coords : Coordinate, piece: Piece, state : GameState) : boolean => {
+    return (piece.color === 'w' && coords.y === 6 || piece.color === 'b' && coords.y === 1);
+}
+
+/**
+ * Checks if a piece can move in a certain stride and alters the give allowed moves array if it can.
+ * It returns the new coordinate of the piece after a move in this stride 
+ *  or null if the piece meets another piece or falls out of bounds.
+ * 
+ * @param coords coordinates of the piece
+ * @param piece piece to move
+ * @param state game state
+ * @param stride a single piece stride
+ * @param movesRef reference to the allowed moves array. Is modified in this function as a side effect
+ * @returns Coordinate if the piece does not meet another piece or the ends up out of bounds, null otherwise
+ */
+const checkStepInDirection = (coords : Coordinate, piece : Piece, state : GameState, stride:number[], movesRef: boolean[]) 
+: (Coordinate | null) => {
+    let newCoords = {...coords};
+    newCoords = {x : newCoords.x + stride[0], y: newCoords.y + stride[1]}
+    
+    if(newCoords.x >= BOARD_SIZE || newCoords.x < 0 || newCoords.y >= BOARD_SIZE || newCoords.y < 0){
+        return null;
+    }
+    if(getPiece(newCoords, state) !== null){
+        //TODO: check if piece takes
+        return null;
+    }
+    //TODO: check if move mates itself
+    
+    movesRef[newCoords.x + BOARD_SIZE*newCoords.y] = true
+    return newCoords;
+}
+
+
+const checkMovesInDirection = (maximumSteps : number, coords : Coordinate, piece : Piece, state : GameState, stride:number[], movesRef: boolean[]) 
+: void => {
+    let newCoords = {...coords};
+    for(let i=0; i<maximumSteps; i++){
+            let nextCoords = checkStepInDirection(newCoords, piece, state, stride, movesRef);
+            if(nextCoords === null){break;}
+            newCoords = nextCoords
+        }
+}
+
+
+
+export const getAllowedMoves = (coords : Coordinate, state : GameState) : boolean[] => {   
     const piece = getPiece(coords, state)    
     if(piece === null || piece.color !== state.turn){return [];}
     
     const moves : boolean[] = new Array(BOARD_SIZE ** 2).fill(false)
-    const {x, y} = coords;
     const strideArray = strides.get(piece.type)    
     if(!strideArray){return []}
 
-    for (const stride of strideArray) {
-        const newCoord = {x : x + stride[0], y: y + stride[1]}
-        if(newCoord.x >= BOARD_SIZE || newCoord.x < 0 || newCoord.y >= BOARD_SIZE || newCoord.y < 0){
-            continue;
-        }
-
-        if(getPiece(newCoord, state) !== null){
-            //check if takes is possible
+    switch (piece.type) {
+        case 'k':
+            for (const stride of strideArray) {
+                checkMovesInDirection(1, coords, piece, state, stride, moves);
+            }
             break;
-        }
-        moves[newCoord.x + BOARD_SIZE*newCoord.y] = true
-    }
+        case 'K':
+            //TODO: check for castling
+            for(const stride of strideArray){
+                checkMovesInDirection(1, coords, piece, state, stride, moves);
+            }
+            break;
+        case 'p':
+            //TODO: add en passant
+            for (const stride of strideArray) {
+                let newCoords = {...coords};
+                if(piece.color === 'w' && stride[1] > 0 || piece.color === 'b' && stride[1] < 0) {
+                    continue;
+                }
+                const numberOfMoves = pawnIsInStartingPosition(coords, piece, state) ? 2 : 1;
+                checkMovesInDirection(numberOfMoves, coords, piece, state, stride, moves);
+            }
+            break;
+        default:
+            for (const stride of strideArray) {
+                checkMovesInDirection(Infinity, coords, piece, state, stride, moves);                
+            }
+            break;
+    }        
     return moves;
 }
 
