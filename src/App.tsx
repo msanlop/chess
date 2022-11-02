@@ -7,7 +7,7 @@ import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosi
 function App() {
 
   const [selectedPiece, setSelectedPiece] = useState({x : 0, y : 0})
-  const [gameState, setGameState] = useState({board:starterPosition, turn:'w'})
+  const [gameState, setGameState] = useState({board:starterPosition, turn:'w', check:false})
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
 
@@ -30,6 +30,7 @@ function App() {
       <header className="App-header">
         <p>Last coords used were : ({selectedPiece.x} {selectedPiece.y})</p>
         <p>turn for {gameState.turn}</p>
+        <p>Is there a check ? : {String(gameState.check)} </p>
         <Board 
           onClick={onClick}
           tiles={gameState.board}
