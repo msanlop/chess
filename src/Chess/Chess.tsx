@@ -27,6 +27,7 @@ export interface Board {
 interface GameState {
     readonly turn : string; // boolean?
     readonly board : (Piece | null)[];
+    readonly check : boolean
     // times ?: number; //timers??
 }
 
