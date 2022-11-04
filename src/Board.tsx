@@ -12,7 +12,8 @@ function Board(props:any) {
     return (
         <div className="chess-board">
             <ul>
-                {props.tiles.map( (piece: any, index: number) => {
+                {props.gameState.board.map( (piece: any, index: number) => {
+                    // if(index !== 4){return;}
                     const [x,y] = [index%boardSide, index/boardSide >> 0]
 
                     return (

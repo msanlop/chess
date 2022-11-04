@@ -11,18 +11,21 @@ function App() {
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
 
-  const onClick = (coords : Coordinate) => {
-
-    if(allowed[coords.x + BOARD_SIZE*coords.y]){
+  const selectTile = (coords : Coordinate) => {
+    //clear high
+    if(!coords){return}
+    
+    if (!coords || !allowed[coords.x + BOARD_SIZE*coords.y]){
+    setSelectedPiece({x:coords.x, y:coords.y})
+    const moves = getAllowedMovesForPieceAtCoordinate(coords, gameState);
+    setAllowedMoves(moves)
+    }
+    else{
       setGameState(move(selectedPiece, coords, gameState))
       setAllowedMoves(new Array(BOARD_SIZE).fill(false))
-    } else {
-      setSelectedPiece({x:coords.x, y:coords.y})
-      const moves = getAllowedMovesForPieceAtCoordinate(coords, gameState);
-      setAllowedMoves(moves)
     }
-    
   }
+  
 
 
   return (
@@ -32,8 +35,8 @@ function App() {
         <p>turn for {gameState.turn}</p>
         <p>Is there a check ? : {String(gameState.check)} </p>
         <Board 
-          onClick={onClick}
-          tiles={gameState.board}
+          onClickSelect={selectTile}
+          gameState={gameState}
           highlighted={allowed}
         />
       </header>
