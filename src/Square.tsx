@@ -3,7 +3,7 @@ import internal from "stream";
 import './Square.css'
 import {Coordinate} from './Chess/Chess'
 import { reduceEachLeadingCommentRange } from "typescript";
-
+import {pieceIcons} from './res/Pieces'
 
 interface TileInformation {
     piece : {type: string, color : string};
@@ -19,10 +19,10 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
     useEffect( () => {
     const {x,y} = props.coords
     if(props.highlighted){
-            setcolors({background : 'red', color : 'black'});
+            setcolors({background : '#c74c21', color : 'black'});
         } else{
 
-            let bg = (x+y) % 2  === 0 ? "white" : "black"
+            let bg = (x+y) % 2  === 0 ? "#219CC7" : "#EBFAFF"
             let text = bg === "white"? "black" : "white"
             setcolors({background : bg, color : text});
         }
@@ -37,8 +37,8 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
             style={colors} 
             onClick={e => props.onClick(props.coords)}
         >
-            
-            {props.piece === null ? <br></br> : props.piece.color + props.piece.type}
+
+            {props.piece === null ? <></> : <img src={pieceIcons.get(props.piece.color + props.piece.type)}></img>}
         </div>
     )
 }
