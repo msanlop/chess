@@ -6,6 +6,7 @@ import { pieceIcons } from "./res/Pieces";
 import { BOARD_SIZE, Coordinate, getPiece } from "./Chess/Chess";
 import BoardCoordinate from "./BoardCoordinate";
 
+const uiCoordinatesArray = " abcdefgh".split('')
 
 function Board(props:any) {
 
@@ -86,7 +87,7 @@ function Board(props:any) {
                     return (
                         <>
                         {/* draw index to the left of the board */}
-                        {index % BOARD_SIZE === 0 ? <BoardCoordinate char={ (BOARD_SIZE - y).toString()}/>: <></>}
+                        {index % BOARD_SIZE === 0 ? <li key={'i'+ index}><BoardCoordinate char={ (BOARD_SIZE - y).toString()}/></li>: <></>}
 
                         <li key={index} onMouseMove={(e) => {}}>    
                             <Square 
@@ -107,8 +108,10 @@ function Board(props:any) {
                 )}
 
                 {/* draw indices at the bottom of the board */}
-                {" abcdefgh".split('').map(char => 
-                    <BoardCoordinate char={char} />
+                {uiCoordinatesArray.map(char => 
+                    <li key={char}>
+                        <BoardCoordinate char={char} />
+                    </li>
                 )}
             </ul>
             
