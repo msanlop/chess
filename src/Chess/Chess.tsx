@@ -159,7 +159,7 @@ const isCheck = (state: GameState, player: string) : boolean => {
 //returns true if the given player has no allowed moves
 const hasNoAllowedMoves = (state:GameState, player:string) => {
     const whitePieces = state.board
-        .map( (val, index) => {return {...val, x:index%BOARD_SIZE, y:Math.floor(index%BOARD_SIZE)}})
+        .map( (val, index) => {return {...val, x:index%BOARD_SIZE, y:Math.floor(index/BOARD_SIZE)}})
         .filter( v => v !== null && v.color === player)
 
     for(const p of whitePieces){
