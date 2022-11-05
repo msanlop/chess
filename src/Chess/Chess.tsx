@@ -1,3 +1,5 @@
+import { debug } from "console";
+
 export const BOARD_SIZE = 8;
 
 const starterPositionSerialized = 
@@ -24,7 +26,7 @@ export interface Board {
     readonly board : (Piece | null)[];
 }
 
-interface GameState {
+export interface GameState {
     readonly turn : string; // boolean?
     readonly board : (Piece | null)[];
     readonly check : boolean;
@@ -301,6 +303,7 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
  */
 export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameState => {
     //TODO: check move is allowed for server purposes??
+    debugger
     const newBoard = [...state.board]
     const piece = newBoard[from.x + BOARD_SIZE*from.y];
     newBoard[to.x + BOARD_SIZE*to.y] = piece;

@@ -1,0 +1,14 @@
+.history-arrows {
+    display: flex; 
+    flex-direction : row;
+}
+
+
+svg{
+    padding-left: 5%;
+    fill: #3178C6;
+}
+
+svg:hover{
+    fill: #C94E3E;
+}
