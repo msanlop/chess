@@ -4,6 +4,7 @@ import './Board.css'
 import { isPropertySignature } from "typescript";
 import { pieceIcons } from "./res/Pieces";
 import { BOARD_SIZE, Coordinate, getPiece } from "./Chess/Chess";
+import BoardCoordinate from "./BoardCoordinate";
 
 
 function Board(props:any) {
@@ -84,8 +85,11 @@ function Board(props:any) {
                     const [x,y] = [index%BOARD_SIZE, index/BOARD_SIZE >> 0]
                     //TODO: fix unecessary redraws
                     return (
-                        <li key={index} onMouseMove={(e) => {}}>
-                            
+                        <>
+                        {/* draw index to the left of the board */}
+                        {index % BOARD_SIZE === 0 ? <BoardCoordinate char={ (BOARD_SIZE - y).toString()}/>: <></>}
+
+                        <li key={index} onMouseMove={(e) => {}}>    
                             <Square 
                                 coords={{x,y}}
                                 piece={piece}
@@ -98,10 +102,18 @@ function Board(props:any) {
                                 dragHover={dragging && lastHoveredCoords!.x === x && lastHoveredCoords!.y === y} //TODO: only true for the hovered tile
                             />
                         </li>
+                        </>
                     )
                     }
                 )}
+
+                {/* draw indices at the bottom of the board */}
+                {" abcdefgh".split('').map(char => 
+                    <BoardCoordinate char={char} />
+                )}
             </ul>
+            
+
         </div>
     )
 }
