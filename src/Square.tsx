@@ -5,6 +5,13 @@ import {Coordinate} from './Chess/Chess'
 import { isPropertySignature, reduceEachLeadingCommentRange } from "typescript";
 import {pieceIcons} from './res/Pieces'
 
+//TODO: get something better...
+const BLACK_BACKGROUND_COLOR = "#3178C6"
+const WHITE_BACKGROUND_COLOR = "#FFFFFF"
+const HIGHLIGHT_COLOR = "#C94E3E"
+const HOVER_DRAG_COLOR = HIGHLIGHT_COLOR
+
+
 interface TileInformation {
     piece : {type: string, color : string};
     coords : Coordinate;
@@ -44,15 +51,15 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
         const {x,y} = props.coords
         let newStyle = {}
         if(props.highlighted){
-                newStyle = {background : '#EE6C4D', color : 'black'}
+                newStyle = {background : HIGHLIGHT_COLOR, color : 'black'}
             } else{
 
-                let bg = (x+y) % 2  === 0 ? "#ffffff" : "#007acc"
+                let bg = (x+y) % 2  === 0 ? WHITE_BACKGROUND_COLOR : BLACK_BACKGROUND_COLOR
                 let text = bg === "white"? "black" : "white"
                 newStyle = {background : bg, color : text}
             }
         if(props.dragHover){
-            newStyle = {...newStyle, border:"solid", boxSizing: "border-box", borderColor:"#EE6C4D"}
+            newStyle = {...newStyle, border:"solid", boxSizing: "border-box", borderColor: HOVER_DRAG_COLOR}
         } else {
             newStyle = {...newStyle, border:"none", boxSizing: "border-box"}
 
