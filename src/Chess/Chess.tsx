@@ -27,7 +27,9 @@ export interface Board {
 interface GameState {
     readonly turn : string; // boolean?
     readonly board : (Piece | null)[];
-    readonly check : boolean
+    readonly check : boolean;
+    readonly finished : boolean;
+    readonly stalemate : boolean;
     // times ?: number; //timers??
 }
 
@@ -78,8 +80,8 @@ export const getPiece = (coords : Coordinate, state : GameState) : (Piece | null
     return state.board[x + y*BOARD_SIZE];
 }
 
-//checks if player who's turn is now is in a check
-const isChecked = (state: GameState, player: string) : boolean => {
+//checks if given player is in check
+const isCheck = (state: GameState, player: string) : boolean => {
     let king;
     let i = -1;
     while(!king){
@@ -152,6 +154,20 @@ const isChecked = (state: GameState, player: string) : boolean => {
 
     //TODO: check with pawn and king
     return false;
+}
+
+//returns true if the given player has no allowed moves
+const hasNoAllowedMoves = (state:GameState, player:string) => {
+    const whitePieces = state.board
+        .map( (val, index) => {return {...val, x:index%BOARD_SIZE, y:Math.floor(index%BOARD_SIZE)}})
+        .filter( v => v !== null && v.color === player)
+
+    for(const p of whitePieces){
+        if(getAllowedMovesForPieceAtCoordinate({x:p.x, y:p.y}, state).some(b => b)){
+            return false
+        }
+    }
+    return true;
 }
 
 
@@ -268,8 +284,8 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
         const tempBoard = [...state.board]
         tempBoard[coords.x + BOARD_SIZE*coords.y] = null 
         tempBoard[index] = piece
-        const tempState = {board: tempBoard, turn:state.turn, check:false}
-        return !isChecked(tempState, piece.color)
+        const tempState = {board: tempBoard, turn:state.turn, check:false, finished:false, stalemate:false}
+        return !isCheck(tempState, piece.color)
     })
     
     return movesWithoutSelfChecks;
@@ -291,10 +307,10 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
     newBoard[from.x + BOARD_SIZE*from.y] = null;
     const newTurn = state.turn === 'w' ? 'b' : 'w';
     
-    const newState = {board:newBoard, turn:newTurn, check:false}
-    const check = isChecked(newState, newTurn); //TODO: check for actual checks
-
-    return check ? {...newState, check:check} : newState;
+    const newState = {board:newBoard, turn:newTurn, check:false, finished:false, stalemate:false}
+    const check = isCheck(newState, newTurn); //TODO: check for actual checks
+    const cantMove = hasNoAllowedMoves(newState,  newTurn);
+    return {...newState, check:check, finished:cantMove, stalemate:cantMove && !check}
 }
 
 export {isGameFinished, starterPosition}

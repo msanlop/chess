@@ -7,7 +7,7 @@ import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosi
 function App() {
 
   const [selectedPiece, setSelectedPiece] = useState({x : 0, y : 0})
-  const [gameState, setGameState] = useState({board:starterPosition, turn:'w', check:false})
+  const [gameState, setGameState] = useState({board:starterPosition, turn:'w', check:false, finished:false, stalemate:false})
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
   const [draggingPiece, setDraggingPiece] = useState(false)
@@ -21,7 +21,7 @@ function App() {
    * @param coords piece coordinate
    */
   const selectTile = (coords : Coordinate | undefined, dragging : boolean) => {
-    
+    if(gameState.finished){return;}
     //unselect if cursor outside board
     if(!coords){
       setAllowedMoves(new Array(BOARD_SIZE).fill(false))
@@ -47,7 +47,8 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Is there a check ? : {String(gameState.check)} </p>
+        {gameState.finished ? <p>"Winner " + {gameState.turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
+        {gameState.stalemate ? <p>"There has been a stalemate!!!!"</p> : <></>}
         <Board 
           onClickSelect={selectTile}
           gameState={gameState}
