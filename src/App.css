@@ -16,6 +16,8 @@
 .App-header {
   background-color: #282c34;
   /* min-height: 100vh; */
+  overflow: scroll;
+  max-height: 150px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,7 +27,9 @@
 }
 
 .App-body {
-  background-color: #282c34;
+  background-color: #002c34;
+  /* overflow-y: hidden; */
+  width: 900px;
   display: flex;
   flex-direction: row;
   /* align-items: center;
@@ -35,12 +39,8 @@
 }
 
 .right-panel {
-  background-color: #FFFFFF;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 5%;
+  margin-left : 2%;
+  margin-bottom: 60%;
   font-size: calc(10px + 2vmin);
   color: white;
 }

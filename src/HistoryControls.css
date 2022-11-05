@@ -1,12 +1,16 @@
 .history-arrows {
-    display: flex; 
-    flex-direction : row;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 50px;
+    border: 10px solid #3178C6;
+    background-color: white;
+    border-radius: 10px;
 }
 
 
 svg{
-    padding-left: 5%;
     fill: #3178C6;
+    min-width: 50px;
 }
 
 svg:hover{
