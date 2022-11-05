@@ -74,7 +74,7 @@ function App() {
         
       </header>
       <div className='App-body'>
-      {gameState[gameStateHistoryIndex].finished ? <p>"Winner " + {gameState[gameStateHistoryIndex].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
+      {gameState[gameStateHistoryIndex].finished ? <p>"Winner " + {gameState[gameState.length - 1].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
         {gameState[gameStateHistoryIndex].stalemate ? <p>"There has been a stalemate!!!!"</p> : <></>}
         <Board 
           onClickSelect={selectTile}
