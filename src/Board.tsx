@@ -20,8 +20,7 @@ function Board(props:any) {
      */
     const followMouseCursor = (event : React.MouseEvent) => {        
         if(dragging){
-            //TODO: fix page zoom offset for high zooms?
-            //TODO: fix sprite offset
+            //TODO: fix page zoom offset for page scrolling : make it unscrollable !!!!
             const x = event.clientX
             const y = event.clientY
             setDraggingCoords({x:x, y:y})

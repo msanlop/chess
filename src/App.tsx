@@ -47,8 +47,6 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Last coords used were : ({selectedPiece.x} {selectedPiece.y})</p>
-        <p>turn for {gameState.turn}</p>
         <p>Is there a check ? : {String(gameState.check)} </p>
         <Board 
           onClickSelect={selectTile}
