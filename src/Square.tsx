@@ -10,6 +10,7 @@ const BLACK_BACKGROUND_COLOR = "#3178C6"
 const WHITE_BACKGROUND_COLOR = "#FFFFFF"
 const HIGHLIGHT_COLOR = "#C94E3E"
 const HOVER_DRAG_COLOR = HIGHLIGHT_COLOR
+const HALF_ICON_SIZE = 45 / 2
 
 
 interface TileInformation {
@@ -33,8 +34,8 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
         if(props.draggingCoords) {
             setPosition({
                 position:"absolute",
-                top:props.draggingCoords.y,
-                left:props.draggingCoords.x,
+                top:props.draggingCoords.y - HALF_ICON_SIZE,
+                left:props.draggingCoords.x - HALF_ICON_SIZE,
             })            
         } else {
             setPosition({
