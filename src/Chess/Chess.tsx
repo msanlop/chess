@@ -1,6 +1,7 @@
 import { debug } from "console";
 
 export const BOARD_SIZE = 8;
+export const STARTING_TIME = 300000;
 
 const starterPositionSerialized = 
 `br:bk:bb:bq:bK:bb:bk:br:\
@@ -11,6 +12,15 @@ bp:bp:bp:bp:bp:bp:bp:bp:\
 ::::::::\
 wp:wp:wp:wp:wp:wp:wp:wp:\
 wr:wk:wb:wq:wK:wb:wk:wr`
+
+const deserialize = (pos : string) : (Piece | null)[] => {
+    return pos.split(":").map(p => {        
+        if(p.length === 0) {return null}
+        return {type:p[1], color: p[0]}
+    })
+}
+
+const starterPosition : (Piece | null)[] = deserialize(starterPositionSerialized)
 
 interface Piece {
     readonly type: string;
@@ -32,7 +42,37 @@ export interface GameState {
     readonly check : boolean;
     readonly finished : boolean;
     readonly stalemate : boolean;
+    readonly wLastMoveTime ?: number;
+    readonly bLastMoveTime ?: number;
+    readonly wTimeLeft : number;
+    readonly bTimeLeft : number;
+
     // times ?: number; //timers??
+}
+
+const genericGameState = {
+    board: [], 
+    turn:'X', 
+    check:false, 
+    finished:false, 
+    stalemate:false,
+    wLastMoveTime : undefined,
+    bLastMoveTime : undefined,
+    wTimeLeft : 1000,
+    bTimeLeft : 1000,
+}
+
+
+export const startingGameState = {
+    board: starterPosition, 
+    turn: 'w', 
+    check:false, 
+    finished:false, 
+    stalemate:false,
+    wLastMoveTime : 300000,
+    bLastMoveTime : 300000,
+    wTimeLeft : STARTING_TIME,
+    bTimeLeft : STARTING_TIME,
 }
 
 // const directions : Map<string, number[][]> = new Map([
@@ -58,15 +98,6 @@ const correctPawnDirections = (directions:number[][], color:string) : number[][]
 );
 }
     
-
-const deserialize = (pos : string) : (Piece | null)[] => {
-    return pos.split(":").map(p => {        
-        if(p.length === 0) {return null}
-        return {type:p[1], color: p[0]}
-    })
-}
-
-const starterPosition : (Piece | null)[] = deserialize(starterPositionSerialized)
 
 const isOutOfBounds = (coords : Coordinate) : boolean => {
     return (coords.x >= BOARD_SIZE 
@@ -286,8 +317,8 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
         const tempBoard = [...state.board]
         tempBoard[coords.x + BOARD_SIZE*coords.y] = null 
         tempBoard[index] = piece
-        const tempState = {board: tempBoard, turn:state.turn, check:false, finished:false, stalemate:false}
-        return !isCheck(tempState, piece.color)
+        // const tempState = {board: tempBoard, turn:state.turn, check:false, finished:false, stalemate:false}
+        return !isCheck({...genericGameState, board:tempBoard, turn:state.turn}, piece.color)
     })
     
     return movesWithoutSelfChecks;
@@ -303,17 +334,38 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
  */
 export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameState => {
     //TODO: check move is allowed for server purposes??
-    debugger
     const newBoard = [...state.board]
     const piece = newBoard[from.x + BOARD_SIZE*from.y];
     newBoard[to.x + BOARD_SIZE*to.y] = piece;
     newBoard[from.x + BOARD_SIZE*from.y] = null;
     const newTurn = state.turn === 'w' ? 'b' : 'w';
     
-    const newState = {board:newBoard, turn:newTurn, check:false, finished:false, stalemate:false}
+    //get new timers
+    let wNewTimeLeft = state.wTimeLeft;
+    let bNewTimeLeft = state.bTimeLeft;
+    let bNewLastMoveTime = state.bLastMoveTime;
+    let wNewLastMoveTime = state.wLastMoveTime;
+    if(state.turn == 'w'){
+        wNewLastMoveTime = performance.now()
+        wNewTimeLeft =  wNewTimeLeft - (wNewLastMoveTime - bNewLastMoveTime!)
+    } else {
+        bNewLastMoveTime = performance.now()
+        bNewTimeLeft =  bNewTimeLeft - (bNewLastMoveTime - wNewLastMoveTime!)
+    }
+    
+    const newState = {...genericGameState, board:newBoard, turn:newTurn}
     const check = isCheck(newState, newTurn); //TODO: check for actual checks
     const cantMove = hasNoAllowedMoves(newState,  newTurn);
-    return {...newState, check:check, finished:cantMove, stalemate:cantMove && !check}
+    return {
+        ...newState,
+        check:check,
+        finished:cantMove,
+        stalemate:cantMove && !check,
+        wLastMoveTime : wNewLastMoveTime,
+        bLastMoveTime : bNewLastMoveTime,
+        wTimeLeft : wNewTimeLeft,
+        bTimeLeft : bNewTimeLeft,
+    }
 }
 
 export {isGameFinished, starterPosition}

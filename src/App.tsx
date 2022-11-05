@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Board from "./Board"
-import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosition, move, getPiece, GameState} from "./Chess/Chess"
+import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosition, move, getPiece, GameState, startingGameState, STARTING_TIME} from "./Chess/Chess"
 import InfoPanel from "./InfoPanel"
 
 function App() {
 
   const [selectedPiece, setSelectedPiece] = useState({x : 0, y : 0})
   const [gameStateHistoryIndex,setGameStateHistoryIndex] = useState(0)
-  const [gameState, setGameState] = useState<GameState[]>([{board:starterPosition, turn:'w', check:false, finished:false, stalemate:false}])
+  const [gameState, setGameState] = useState<GameState[]>([{...startingGameState, wLastMoveTime:performance.now(), bLastMoveTime:performance.now()}])
   // const [gameStateHistory, setGameStateHistory] = useState<GameState[]>([])
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
   const [draggingPiece, setDraggingPiece] = useState(false)
+  const [timers, setTimers] = useState({w:STARTING_TIME, b:STARTING_TIME})
+  const [intervalIds, setIntervalIds] = useState<number[]>([])
+  const [counter, setCounter] = useState(0)
+
+  useEffect( () => {
+    intervalIds.forEach(id => window.clearInterval(id))
+    const id : number = window.setInterval(updateTimers, 1000);
+    intervalIds.push(id) //useing setState did not work with React.Strict mode on and one of the timers would not get cleared
+    setIntervalIds(intervalIds);
+    setCounter(performance.now())
+  }, [gameState])
 
   /**
    * selectTile handles the piece moves/captures.
@@ -48,6 +59,7 @@ function App() {
       setGameStateHistoryIndex(gameState.length)
       setGameState([...gameState, newState])      
       setAllowedMoves(new Array(BOARD_SIZE).fill(false))
+      setTimers({w:newState.wTimeLeft, b:newState.bTimeLeft})
     }
   }
 
@@ -64,14 +76,35 @@ function App() {
         break;
     }
   }
+
+
+  const msToMin = (ms:number) => {
+    let min = Math.floor((ms/1000/60) << 0);
+    let sec = Math.floor((ms/1000) % 60);
+    return min.toString() + ":" + sec.toString()
+  }
+
+  const updateTimers = () => {
+    
+    const {w, b} = timers
+    console.log("timers", w, b, gameState.length - 1);
+    if(gameState[gameState.length-1].turn === 'w'){
+      setTimers({w:w-(performance.now() - counter!),b:b})
+    } else {
+      setTimers({w:w,b:b-(performance.now() - counter!)})
+    }
+    setCounter(performance.now())
+  }
   
-  console.log(gameStateHistoryIndex);
 
 
   return (
     <div className="App">
       <header className="App-header">
-        
+        <p>white time left</p>
+        {msToMin(timers.w)}
+        <p>black time left</p>
+        {msToMin(timers.b)}
       </header>
       <div className='App-body'>
       {gameState[gameStateHistoryIndex].finished ? <p>"Winner " + {gameState[gameState.length - 1].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
