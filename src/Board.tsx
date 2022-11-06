@@ -19,11 +19,10 @@ function Board(props:any) {
     /**
      * if dragging a piece, updates the piece position to follow mouse cursos
      */
-    const followMouseCursor = (event : React.MouseEvent) => {        
+    const followMouseCursor = (event : React.MouseEvent) => {     
         if(dragging){
-            //TODO: fix page zoom offset for page scrolling : make it unscrollable !!!!
-            const x = event.clientX
-            const y = event.clientY
+            const x = event.pageX
+            const y = event.pageY
             setDraggingCoords({x:x, y:y})
         }
     }
@@ -54,8 +53,8 @@ function Board(props:any) {
             && p !== null
             && p?.color === props.gameState.turn){
             setDragging(true)
-            const x = event.clientX
-            const y = event.clientY
+            const x = event.pageX
+            const y = event.pageY
             setDraggedPieceIndex(coords.x + coords.y*BOARD_SIZE)
             setDraggingCoords({x:x, y:y})
             props.onClickSelect(coords)
