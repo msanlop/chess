@@ -4,6 +4,7 @@ import './App.css';
 import Board from "./Board"
 import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosition, move, getPiece, GameState, startingGameState, STARTING_TIME} from "./Chess/Chess"
 import InfoPanel from "./InfoPanel"
+import Timer from './Timer';
 
 function App() {
 
@@ -19,7 +20,10 @@ function App() {
   const [counter, setCounter] = useState(0)
 
   useEffect( () => {
-    intervalIds.forEach(id => window.clearInterval(id))
+    for(var i = 0; i<intervalIds.length; i++){
+      const id = intervalIds.pop()
+      window.clearInterval(id)
+    }
     const id : number = window.setInterval(updateTimers, 1000);
     intervalIds.push(id) //useing setState did not work with React.Strict mode on and one of the timers would not get cleared
     setIntervalIds(intervalIds);
@@ -78,11 +82,7 @@ function App() {
   }
 
 
-  const msToMin = (ms:number) => {
-    let min = Math.floor((ms/1000/60) << 0);
-    let sec = Math.floor((ms/1000) % 60);
-    return min.toString() + ":" + sec.toString()
-  }
+
 
   const updateTimers = () => {
     
@@ -101,22 +101,26 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>white time left</p>
-        {msToMin(timers.w)}
-        <p>black time left</p>
-        {msToMin(timers.b)}
+        <h2> Chess</h2>
+        <p>waltuh</p>
+        {/* <p>white time left</p> */}
+        {/* {msToMin(timers.w)} */}
+        {/* <p>black time left</p> */}
+        {/* {msToMin(timers.b)} */}
       </header>
       <div className='App-body'>
       {gameState[gameStateHistoryIndex].finished ? <p>"Winner " + {gameState[gameState.length - 1].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
         {gameState[gameStateHistoryIndex].stalemate ? <p>"There has been a stalemate!!!!"</p> : <></>}
-        <Board 
-          onClickSelect={selectTile}
-          gameState={gameState[gameStateHistoryIndex]}
-          highlighted={allowed}
-        />
+          <Board 
+            onClickSelect={selectTile}
+            gameState={gameState[gameStateHistoryIndex]}
+            highlighted={allowed}
+            />
         <div className='right-panel'>
           <InfoPanel 
-            onClick={changeViewedState}/>
+            onClick={changeViewedState}
+            timers={timers}
+            />
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import HistoryControls from "./HistoryControls";
+import Timer from "./Timer";
 
 
 
@@ -6,7 +7,11 @@ import HistoryControls from "./HistoryControls";
 const InfoPanel = (props:any) =>{
 
     return(
-        <HistoryControls onClick={props.onClick}/>
+        <>
+            <Timer timerValue={props.timers.b} color="b"/>
+            <HistoryControls onClick={props.onClick}/>
+            <Timer timerValue={props.timers.w} color="w"/>
+        </>
     )
 }
 
