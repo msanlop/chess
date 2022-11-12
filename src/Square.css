@@ -11,5 +11,5 @@
     -moz-user-drag: none;
     -o-user-drag: none;
     pointer-events: none;
-    width:9vw;
+    width: min(10vw, 10vh);
 }
