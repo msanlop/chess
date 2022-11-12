@@ -6,6 +6,15 @@
 }
 
 
+#tile {
+    list-style-type: none;
+    /* width: 70px;
+    height: 70px; */
+    /* height: 100%; */
+    height: min(10vw, 10vh);
+    width: min(10vw, 10vh);
+}
+
 ul {
     display: grid;
     grid-template-columns: repeat(9, 1fr);

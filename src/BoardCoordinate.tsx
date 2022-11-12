@@ -11,7 +11,7 @@ const BoardCoordinate = (props : CoordinateCharacter) => {
 
 
     return (
-        <div className="coordinate">
+        <div className="coordinate" id='tile'>
             {props.char}
         </div>
     )

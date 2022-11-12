@@ -12,7 +12,7 @@ const BLACK_BACKGROUND_COLOR_OLD_STATE = "grey"
 const WHITE_BACKGROUND_COLOR = "#FFFFFF"
 const HIGHLIGHT_COLOR = "#C94E3E"
 const HOVER_DRAG_COLOR = HIGHLIGHT_COLOR
-const HALF_ICON_SIZE = 45 / 2
+const HALF_ICON_SIZE = 116 / 2
 
 
 interface TileInformation {
@@ -40,12 +40,13 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
                 position:"absolute",
                 top:props.draggingCoords.y - HALF_ICON_SIZE,
                 left:props.draggingCoords.x - HALF_ICON_SIZE,
+
             })            
         } else {
             setPosition({
                 position:"relative",
-                top:"20%",
-                left:"0%"
+                // top:"20%",
+                // left:"0%"
             })
         }
     }, [props.draggingCoords])
@@ -77,7 +78,6 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
             newStyle = {...newStyle, border:"solid", boxSizing: "border-box", borderColor: HOVER_DRAG_COLOR}
         } else {
             newStyle = {...newStyle, border:"none", boxSizing: "border-box"}
-
         }
         setColorsStyle(newStyle)
     }, [props.highlighted, props.dragHover, props.oldState, props.isInCheck])
@@ -88,7 +88,8 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
 
 
     return (
-        <div className="tile" 
+        <div className="square" 
+            id="tile"
             style={{...colorsStyle}} 
             onClick={e => props.onClick(props.coords, false)}
             onMouseDown={squareOnMouseDown}

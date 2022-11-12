@@ -1,12 +1,3 @@
-.tile {
-    list-style-type: none;
-    /* width: 70px;
-    height: 70px; */
-    /* height: 100%; */
-    height: 45px;
-    width: 45px;
-}
-
 
 .piece-icon {
     /* disable selection by mouse dragging and stuff */
@@ -20,9 +11,5 @@
     -moz-user-drag: none;
     -o-user-drag: none;
     pointer-events: none;
-    
-
-    transform: translate(0px, -20%);
-    /* position:relative; */
-
+    width:9vw;
 }
