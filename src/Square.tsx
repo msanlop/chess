@@ -7,6 +7,7 @@ import {pieceIcons} from './res/Pieces'
 
 //TODO: get something better...
 const BLACK_BACKGROUND_COLOR = "#3178C6"
+const BLACK_BACKGROUND_COLOR_OLD_STATE = "grey"
 const WHITE_BACKGROUND_COLOR = "#FFFFFF"
 const HIGHLIGHT_COLOR = "#C94E3E"
 const HOVER_DRAG_COLOR = HIGHLIGHT_COLOR
@@ -18,6 +19,7 @@ interface TileInformation {
     coords : Coordinate;
     onClick : (coords: Coordinate, dragging : boolean) => void;
     highlighted : boolean;
+    oldState : boolean;
     draggingCoords ?: Coordinate;
     onMouseDown : (coords: Coordinate, e: React.MouseEvent) => void;
     onMouseUp : (coords: Coordinate) => void;
@@ -55,7 +57,14 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
                 newStyle = {background : HIGHLIGHT_COLOR, color : 'black'}
             } else{
 
-                let bg = (x+y) % 2  === 0 ? WHITE_BACKGROUND_COLOR : BLACK_BACKGROUND_COLOR
+                // let bg = (x+y) % 2  === 0 ? WHITE_BACKGROUND_COLOR : BLACK_BACKGROUND_COLOR
+                let bg;
+                if((x+y) % 2  === 0){
+                    bg = WHITE_BACKGROUND_COLOR
+                } else {
+                    bg = props.oldState ? BLACK_BACKGROUND_COLOR_OLD_STATE : BLACK_BACKGROUND_COLOR
+                }
+
                 let text = bg === "white"? "black" : "white"
                 newStyle = {background : bg, color : text}
             }
@@ -66,7 +75,7 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
 
         }
         setColorsStyle(newStyle)
-    }, [props.highlighted, props.dragHover])
+    }, [props.highlighted, props.dragHover, props.oldState])
     
     const squareOnMouseDown = (e:React.MouseEvent) => {
         props.onMouseDown(props.coords, e)

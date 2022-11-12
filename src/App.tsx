@@ -114,6 +114,7 @@ function App() {
           <Board 
             onClickSelect={selectTile}
             gameState={gameState[gameStateHistoryIndex]}
+            oldState={gameStateHistoryIndex !== gameState.length-1}
             highlighted={allowed}
             />
         <div className='right-panel'>

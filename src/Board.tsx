@@ -93,6 +93,7 @@ function Board(props:any) {
                                 coords={{x,y}}
                                 piece={piece}
                                 highlighted={props.highlighted[index]}
+                                oldState={props.oldState}
                                 onClick={props.onClickSelect}
                                 onMouseDown={onMouseDown}
                                 onMouseUp={up}
