@@ -94,6 +94,10 @@ function Board(props:any) {
                                 piece={piece}
                                 highlighted={props.highlighted[index]}
                                 oldState={props.oldState}
+                                isInCheck={props.gameState.check 
+                                    && piece 
+                                    && piece.type === 'K' 
+                                    && props.gameState.turn === piece.color}
                                 onClick={props.onClickSelect}
                                 onMouseDown={onMouseDown}
                                 onMouseUp={up}

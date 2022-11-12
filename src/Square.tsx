@@ -7,6 +7,7 @@ import {pieceIcons} from './res/Pieces'
 
 //TODO: get something better...
 const BLACK_BACKGROUND_COLOR = "#3178C6"
+const CHECK_BACKGROUND_COLOR = "red"
 const BLACK_BACKGROUND_COLOR_OLD_STATE = "grey"
 const WHITE_BACKGROUND_COLOR = "#FFFFFF"
 const HIGHLIGHT_COLOR = "#C94E3E"
@@ -20,6 +21,7 @@ interface TileInformation {
     onClick : (coords: Coordinate, dragging : boolean) => void;
     highlighted : boolean;
     oldState : boolean;
+    isInCheck : boolean;
     draggingCoords ?: Coordinate;
     onMouseDown : (coords: Coordinate, e: React.MouseEvent) => void;
     onMouseUp : (coords: Coordinate) => void;
@@ -59,7 +61,10 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
 
                 // let bg = (x+y) % 2  === 0 ? WHITE_BACKGROUND_COLOR : BLACK_BACKGROUND_COLOR
                 let bg;
-                if((x+y) % 2  === 0){
+                if(props.isInCheck){
+                    bg = CHECK_BACKGROUND_COLOR
+                }
+                else if((x+y) % 2  === 0){
                     bg = WHITE_BACKGROUND_COLOR
                 } else {
                     bg = props.oldState ? BLACK_BACKGROUND_COLOR_OLD_STATE : BLACK_BACKGROUND_COLOR
@@ -75,7 +80,7 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
 
         }
         setColorsStyle(newStyle)
-    }, [props.highlighted, props.dragHover, props.oldState])
+    }, [props.highlighted, props.dragHover, props.oldState, props.isInCheck])
     
     const squareOnMouseDown = (e:React.MouseEvent) => {
         props.onMouseDown(props.coords, e)
