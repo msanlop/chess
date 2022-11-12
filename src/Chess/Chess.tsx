@@ -46,6 +46,8 @@ export interface GameState {
     readonly bLastMoveTime ?: number;
     readonly wTimeLeft : number;
     readonly bTimeLeft : number;
+    readonly wCanCastle : boolean[];
+    readonly bCanCastle : boolean[];
 
     // times ?: number; //timers??
 }
@@ -60,6 +62,8 @@ const genericGameState = {
     bLastMoveTime : undefined,
     wTimeLeft : 1000,
     bTimeLeft : 1000,
+    wCanCastle : [true, true],
+    bCanCastle : [true, true],
 }
 
 
@@ -73,6 +77,8 @@ export const startingGameState = {
     bLastMoveTime : 300000,
     wTimeLeft : STARTING_TIME,
     bTimeLeft : STARTING_TIME,
+    wCanCastle : [true, true],
+    bCanCastle : [true, true],
 }
 
 // const directions : Map<string, number[][]> = new Map([
@@ -261,6 +267,39 @@ const checkAllowedMovesInDirectionForPiece = (maximumSteps : number, coords : Co
         }
 }
 
+//get coordinates where king can move if doing a castle
+const getAllowedCastleMovesForKingAtCoordinate = (coords : Coordinate, state : GameState) : Coordinate[] => {
+    const allowedMovesCoords = []
+    const king = getPiece(coords, state)!
+    if(king.color === 'b'){
+        if(state.bCanCastle[0]
+            && !getPiece({x:3, y:0}, state)
+            && !getPiece({x:2, y:0}, state)
+            && !getPiece({x:1, y:0}, state)){
+                allowedMovesCoords.push({x:2, y:0})
+        }
+        if(state.bCanCastle[1]
+            && !getPiece({x:5, y:0}, state)
+            && !getPiece({x:6, y:0}, state)){
+                allowedMovesCoords.push({x:6, y:0})
+        }
+    } else {
+        if(state.wCanCastle[0]
+            && !getPiece({x:3, y:7}, state)
+            && !getPiece({x:2, y:7}, state)
+            && !getPiece({x:1, y:7}, state)){
+                allowedMovesCoords.push({x:2, y:7})
+        }
+        if(state.wCanCastle[1]
+            && !getPiece({x:5, y:7}, state)
+            && !getPiece({x:6, y:7}, state)){
+                allowedMovesCoords.push({x:6, y:7})
+        }
+    }
+
+    return allowedMovesCoords
+}
+
 
 
 export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state : GameState) : boolean[] => {   
@@ -276,9 +315,12 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
             }
             break;
         case 'K':
-            //TODO: check for castling
             for(const direction of [...directions.diagonal, ...directions.straight]){
                 checkAllowedMovesInDirectionForPiece(1, coords, piece, state, direction, moves);
+            }
+            //get posible castle moves
+            for (const c of getAllowedCastleMovesForKingAtCoordinate(coords, state)){
+                moves[c.x + BOARD_SIZE*c.y] = true;
             }
             break;
         case 'p':
@@ -324,6 +366,15 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
     return movesWithoutSelfChecks;
 }
 
+//get a board but with the from piece in to's position
+const getBoardWithMovedPiece = (from: Coordinate, to:Coordinate, board: (Piece | null)[]) => {
+    const newBoard = [...board] //how to typedef instead of this
+    const piece = newBoard[from.x + BOARD_SIZE*from.y];
+    newBoard[to.x + BOARD_SIZE*to.y] = piece;
+    newBoard[from.x + BOARD_SIZE*from.y] = null;
+    return newBoard
+}
+
 /**
  * Moves a piece and returns the new game state
  * 
@@ -334,10 +385,11 @@ export const getAllowedMovesForPieceAtCoordinate = (coords : Coordinate, state :
  */
 export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameState => {
     //TODO: check move is allowed for server purposes??
-    const newBoard = [...state.board]
-    const piece = newBoard[from.x + BOARD_SIZE*from.y];
-    newBoard[to.x + BOARD_SIZE*to.y] = piece;
-    newBoard[from.x + BOARD_SIZE*from.y] = null;
+    let newBoard = getBoardWithMovedPiece(from, to, state.board)
+    // const newBoard = [...state.board]
+    // const piece = newBoard[from.x + BOARD_SIZE*from.y];
+    // newBoard[to.x + BOARD_SIZE*to.y] = piece;
+    // newBoard[from.x + BOARD_SIZE*from.y] = null;
     const newTurn = state.turn === 'w' ? 'b' : 'w';
     
     //get new timers
@@ -352,6 +404,40 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
         bNewLastMoveTime = performance.now()
         bNewTimeLeft =  bNewTimeLeft - (bNewLastMoveTime - wNewLastMoveTime!)
     }
+
+    let wCatsle = state.wCanCastle
+    let bCatsle = state.bCanCastle
+
+    if (from.x === 0 && from.y === 0){
+        bCatsle[0] = false
+    }
+    else if (from.x === 7 && from.y === 0){
+        bCatsle[1] = false
+    }
+    else if (from.x === 4 && from.y === 0) {
+        bCatsle = [false, false]
+        if(to.x === 2 && to.y === 0){
+            newBoard = getBoardWithMovedPiece({x:0, y:0}, {x:3, y:0}, newBoard)
+        }
+        else if(to.x === 6 && to.y === 0){
+            newBoard = getBoardWithMovedPiece({x:7, y:0}, {x:5, y:0}, newBoard)
+        }
+    }
+    if (from.x === 0 && from.y === 7){
+        wCatsle[0] = false
+    }
+    else if (from.x === 7 && from.y === 7){
+        wCatsle[1] = false
+    }
+    else if (from.x === 4 && from.y === 7) {
+        wCatsle = [false, false]
+        if(to.x === 2 && to.y === 7){
+            newBoard = getBoardWithMovedPiece({x:0, y:7}, {x:3, y:7}, newBoard)
+        }
+        else if(to.x === 6 && to.y === 7){
+            newBoard = getBoardWithMovedPiece({x:7, y:7}, {x:5, y:7}, newBoard)
+        }
+    }
     
     const newState = {...genericGameState, board:newBoard, turn:newTurn}
     const check = isCheck(newState, newTurn); //TODO: check for actual checks
@@ -365,6 +451,8 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
         bLastMoveTime : bNewLastMoveTime,
         wTimeLeft : wNewTimeLeft,
         bTimeLeft : bNewTimeLeft,
+        wCanCastle : wCatsle,
+        bCanCastle : bCatsle,
     }
 }
 
