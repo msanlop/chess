@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+#webstorm files
+.idea
+
 # dependencies
 /node_modules
 /.pnp
@@ -11,6 +14,9 @@
 # production
 /build
 
+#compiled files
+/out
+
 # misc
 .DS_Store
 .env.local
@@ -18,6 +24,16 @@
 .env.test.local
 .env.production.local
 
+.xml
+.iml
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+

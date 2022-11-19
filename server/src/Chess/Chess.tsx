@@ -1,26 +1,19 @@
-import { debug } from "console";
 
 export const BOARD_SIZE = 8;
 export const STARTING_TIME = 300000;
 
-const starterPositionSerialized = 
-`br:bk:bb:bq:bK:bb:bk:br:\
-bp:bp:bp:bp:bp:bp:bp:bp:\
-::::::::\
-::::::::\
-::::::::\
-::::::::\
-wp:wp:wp:wp:wp:wp:wp:wp:\
-wr:wk:wb:wq:wK:wb:wk:wr`
+export const starterPosition : (Piece | null)[] = [
+  {"type": "r", "color": "b"},{"type": "k", "color": "b"},{"type": "b", "color": "b"},{"type": "q", "color": "b"},{"type": "K", "color": "b"},{"type": "b", "color": "b"},{"type": "k", "color": "b"},{"type": "r", "color": "b"},
+  {"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},
+  null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,
+  {"type": "p", "color": "w"},{"type": "p", "color": "w"},{"type": "p", "color": "w"},{"type": "p", "color": "w"},{"type": "p", "color": "w"},{"type": "p", "color": "w"},{"type": "p", "color": "w"},{"type": "p", "color": "w"},
+  {"type": "r", "color": "w"},{"type": "k", "color": "w"},{"type": "b", "color": "w"},{"type": "q", "color": "w"},{"type": "K", "color": "w"},{"type": "b", "color": "w"},{"type": "k", "color": "w"},{"type": "r", "color": "w"}
+]
 
-const deserialize = (pos : string) : (Piece | null)[] => {
-    return pos.split(":").map(p => {        
-        if(p.length === 0) {return null}
-        return {type:p[1], color: p[0]}
-    })
-}
 
-const starterPosition : (Piece | null)[] = deserialize(starterPositionSerialized)
 
 interface Piece {
     readonly type: string;
@@ -210,7 +203,7 @@ const hasNoAllowedMoves = (state:GameState, player:string) => {
 }
 
 
-const isGameFinished = () => {
+export const isGameFinished = () => {
     return false
 }
 
@@ -269,7 +262,7 @@ const checkAllowedMovesInDirectionForPiece = (maximumSteps : number, coords : Co
 
 //get coordinates where king can move if doing a castle
 const getAllowedCastleMovesForKingAtCoordinate = (coords : Coordinate, state : GameState) : Coordinate[] => {
-    const allowedMovesCoords = []
+    const allowedMovesCoords : Coordinate[] = []
     const king = getPiece(coords, state)!
     if(king.color === 'b'){
         if(state.bCanCastle[0]
@@ -455,5 +448,3 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
         bCanCastle : bCatsle,
     }
 }
-
-export {isGameFinished, starterPosition}
