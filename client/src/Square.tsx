@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from "react";
 import internal from "stream";
 import './Square.css'
-import {Coordinate} from './Chess/Chess'
+import {Coordinate, Piece} from './Chess/Chess'
 import { isPropertySignature, reduceEachLeadingCommentRange } from "typescript";
 import {pieceIcons} from './res/Pieces'
 
@@ -16,7 +16,7 @@ const HALF_ICON_SIZE = 70 / 2
 
 
 interface TileInformation {
-    piece : {type: string, color : string};
+    piece : (Piece | null);
     coords : Coordinate;
     onClick : (coords: Coordinate, dragging : boolean) => void;
     highlighted : boolean;

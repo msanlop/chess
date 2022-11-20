@@ -15,7 +15,7 @@ export const starterPosition : (Piece | null)[] = [
 
 
 
-interface Piece {
+export interface Piece {
     readonly type: string;
     readonly color: string;
 }

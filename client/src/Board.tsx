@@ -3,13 +3,22 @@ import Square from "./Square";
 import './Board.css'
 import { isPropertySignature } from "typescript";
 import { pieceIcons } from "./res/Pieces";
-import { BOARD_SIZE, Coordinate, getPiece } from "./Chess/Chess";
+import { BOARD_SIZE, Coordinate, GameState, getPiece, Piece} from "./Chess/Chess";
 import BoardCoordinate from "./BoardCoordinate";
 import Timer from "./Timer";
 
 const uiCoordinatesArray = " abcdefgh".split('')
 
-function Board(props:any) {
+interface BoardProps {
+    onClickSelect : (coords ?: Coordinate, dragging ?: boolean) => void ;
+    color : string | null; //'w' | 'b'
+    gameState : GameState;
+    oldState : boolean;
+    highlighted : boolean[];
+    timers : {w: number; b: number;};
+}
+
+function Board(props:BoardProps) {
 
     const [intervalId, setIntervalId] = useState(0)
     const [draggingCoords, setDraggingCoords] = useState({x:0, y:0})
@@ -69,10 +78,11 @@ function Board(props:any) {
     const exitBoard = () => {
         setLastHoveredCoords(undefined)
         setDragging(false)
-        props.onClickSelect(undefined)
+        props.onClickSelect()
     }
 
 
+    const drawBoard = props.color === 'w' ? props.gameState.board : props.gameState.board.reverse();
     return (
         <div className="chess-board" 
             onMouseMove={followMouseCursor}
@@ -82,7 +92,7 @@ function Board(props:any) {
 
             {/* <img src={pieceIcons.get("wq")!} style={{position:"absolute", top:draggingCoords.y, left:draggingCoords.x}}></img> */}
             <ul>
-                {props.gameState.board.map( (piece: any, index: number) => {
+                {drawBoard.map( (piece: (Piece | null), index: number) => {
                     // if(index !== 4){return;}
                     const [x,y] = [index%BOARD_SIZE, index/BOARD_SIZE >> 0]
                     //TODO: fix unecessary redraws
@@ -99,7 +109,8 @@ function Board(props:any) {
                                 highlighted={props.highlighted[index]}
                                 oldState={props.oldState}
                                 isInCheck={props.gameState.check 
-                                    && piece 
+                                    && piece !== null 
+                                    && piece
                                     && piece.type === 'K' 
                                     && props.gameState.turn === piece.color}
                                 onClick={props.onClickSelect}

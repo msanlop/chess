@@ -126,7 +126,7 @@ function App() {
    * 
    * @param coords piece coordinate
    */
-  const selectTile = (coords : Coordinate | undefined, dragging : boolean) => {
+  const selectTile = (coords ?: Coordinate, dragging ?: boolean) => {
     if(!playing || !coords){return;}
     const piece = getPiece(coords, gameStates[gameStateHistoryIndex])
     //go back to present if click on old state
