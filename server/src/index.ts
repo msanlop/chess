@@ -58,21 +58,29 @@ const io = new Server(server, {
   }
 });
 
+
+const ID_LOG_LENGTH = 5
+const padId = (id:string) => {
+  if(padId.length === 5){return id}
+  return " ".concat(id)
+}
+const serverLog = (instanceId:string, content:string) => console.log((new Date).toISOString() + " -- " + padId(instanceId), ": " + content)
+
 const logAndEmit = (instanceId : string, content : string) => {
   io.to(instanceId).emit("info", content)
-  console.log(instanceId, ": " + content)
+  serverLog(instanceId, content)
 }
 
 
 const getGameInstanceOfPlayer = (token: string) : (GameInstance | undefined) => {
   const instaceId = playerGameInstances.get(token)
   if(!instaceId){
-    console.log("ERROR : PLAYER ", token, " NOT ASSIGNED TO A GAME");
+    serverLog("XX", "ERROR : PLAYER " + token + " NOT ASSIGNED TO A GAME");
     return;
   }
   const gameInstance = gameInstances.get(instaceId)
   if(!gameInstance){
-    console.log("ERROR : GAMEINSTANCE ", instaceId, " NOT DEFINED");
+    serverLog(instaceId, "ERROR : GAMEINSTANCE " + instaceId + " NOT DEFINED");
     return;
   }
   return gameInstance;
@@ -81,14 +89,14 @@ const getGameInstanceOfPlayer = (token: string) : (GameInstance | undefined) => 
 const terminateGameInstance = (id : string) => {
   const instance = gameInstances.get(id)
   if(!instance){ //TODO: or delete instance instead of restart?
-    console.log("CANNOT TERMINATE INSTANCE ", id, " DOES NOT EXIST");
+    serverLog(id, "CANNOT TERMINATE INSTANCE " + id + " DOES NOT EXIST");
     return;
   }
-  console.log(id, ": game over")
+  logAndEmit(id, "game over")
   io.to(id).emit("gameOver")
   //terminate session in 10s
   setTimeout(() => {
-    console.log(id, ": restarting instance")
+    logAndEmit(id, "restarting instance")
     instance.gameIsStarted = false //avoid quick reconnect issues but keeps ids
     disconnectOldSocketIfExisting(instance.wId)
     disconnectOldSocketIfExisting(instance.bId)
@@ -130,7 +138,7 @@ const handleSocketConnection = (socket, token) => {
 
 
   socket.emit('color', col)
-  logAndEmit(socket.id, 'connected as player : ' + col);
+  logAndEmit(gameInstance.id, socket.id + 'connected as player : ' + col);
 
   if(!gameInstance.gameIsStarted && gameInstance.bId && gameInstance.wId){
     logAndEmit(gameInstance.id, "both players connected, starting game");
@@ -225,4 +233,4 @@ io.on('connection', (socket) => {
 
 
 // TODO: make server with auth and routing
-server.listen(PORT, () => console.log(new Date(), '- server is listening on port ', PORT))
+server.listen(PORT, () => console.log(new Date().toISOString(), '- server is listening on port ', PORT))
