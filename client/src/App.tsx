@@ -18,7 +18,7 @@ let socket : Socket<DefaultEventsMap, DefaultEventsMap>;
 
 function App() {
 
-  const [selectedPiece, setSelectedPiece] = useState<Coordinate>({x : 0, y : 0})
+  const [selectedPieceCoords, setSelectedPiece] = useState<Coordinate>({x : 0, y : 0})
   const [gameStateHistoryIndex,setGameStateHistoryIndex] = useState(0)
   const [gameStates, setGameStates] = useState<GameState[]>([{...startingGameState, wTimeLeft:5000}])
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
@@ -45,12 +45,10 @@ function App() {
     const id : number = window.setInterval(updateTimers, 1000);
     intervalIds.push(id) //useing setState did not work with React.Strict mode on and one of the timers would not get cleared
     setIntervalIds(intervalIds);
-    setCounter(performance.now())
-  }, [gameStates, playing])
+  }, [gameStates, playing, counter])
 
 
   useEffect( () => {
-    console.log(token);
     
     if(!token.endsWith('w') && !token.endsWith('b')){
       return;
@@ -90,8 +88,9 @@ function App() {
       while(gameStates.pop());
       gameStates.push(initialState)
       setGameStates(gameStates)
-      setTimers({w:initialState.wTimeLeft, b:initialState.bTimeLeft})
       setGameStateHistoryIndex(0)
+      setTimers({w:initialState.wTimeLeft, b:initialState.bTimeLeft})
+      setCounter(performance.now())
     })
 
     socket.on("newState", newState => {
@@ -151,18 +150,9 @@ function App() {
     else{
       
       if(socket.connected){
-        socket.emit("move", {from:selectedPiece, to:coords}, (response:any) => {
+        socket.emit("move", selectedPieceCoords, coords, (response:any) => {
           console.log(response.status);
-          
-          if(response.status === "ok"){
-            // const newState = move(selectedPiece, coords, gameState[gameState.length - 1])
-            // setGameStateHistoryIndex(gameState.length)
-            // setGameState([...gameState, newState])      
-            // setAllowedMoves(new Array(BOARD_SIZE).fill(false))
-            // setTimers({w:newState.wTimeLeft, b:newState.bTimeLeft})
-          } else {
-            setAllowedMoves(new Array(BOARD_SIZE).fill(false))
-          }
+          setAllowedMoves(new Array(BOARD_SIZE).fill(false))
         })
       }
     }
