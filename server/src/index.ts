@@ -1,5 +1,7 @@
 import * as http from 'http'
+import test from 'node:test';
 import {Server} from 'socket.io'
+import { idText } from 'typescript';
 import { GameState, getUpdateTimers, move, startingGameState } from './Chess/Chess';
 
 const PORT = 8080
@@ -8,6 +10,7 @@ const GAME_RESTART_TIME = 10000
 interface GameInstance {
   id: string;
   //socket ids of connected clients, a single connection per side is allowed
+  wToken?: string;
   wId?: string;
   bId?: string;
   gameStates : GameState[];
@@ -19,19 +22,27 @@ interface GameInstance {
 const defaultGameInstance = () : GameInstance => {
   return JSON.parse(JSON.stringify(
     {
+      wToken : undefined,
       wId: undefined,
       bId:undefined,
       gameStates: [startingGameState], //TODO: make deep copy just incase
       gameIsStarted:false,
-      id: "12314"
+      id: "0"
     }
     ))
 }
 
 const getLastGameState = (gameInstance : GameInstance) => gameInstance.gameStates[gameInstance.gameStates.length - 1]
 
-// const playerGameInstances: Map<string, [GameInstance, string]> = new Map() TODO: allow for many game instances
-let gameInstance : GameInstance = defaultGameInstance()
+const playerGameInstances: Map<string, string> = new Map() //TODO: allow for many game instances
+const gameInstances : Map<string, GameInstance> = new Map()
+
+const TEST_W_TOKEN = "tokenw"
+const TEST_B_TOKEN = "tokenb"
+let testGameInstance : GameInstance = {...defaultGameInstance(), id:"123", wToken:TEST_W_TOKEN}
+gameInstances.set(testGameInstance.id, testGameInstance)
+playerGameInstances.set(TEST_W_TOKEN, testGameInstance.id)
+playerGameInstances.set(TEST_B_TOKEN, testGameInstance.id)
 
 
 const server = http.createServer((req, res) => {
@@ -48,17 +59,36 @@ const io = new Server(server, {
 });
 
 
-const terminateGameInstance = (instance : GameInstance) => {
-  console.log("game over")
-  io.to(instance.id.toString()).emit("gameOver")
+const getGameInstanceOfPlayer = (token: string) : (GameInstance | undefined) => {
+  const instaceId = playerGameInstances.get(token)
+  if(!instaceId){
+    console.log("ERROR : PLAYER ", token, " NOT ASSIGNED TO A GAME");
+    return;
+  }
+  const gameInstance = gameInstances.get(instaceId)
+  if(!gameInstance){
+    console.log("ERROR : GAMEINSTANCE ", instaceId, " NOT DEFINED");
+    return;
+  }
+  return gameInstance;
+}
+
+const terminateGameInstance = (id : string) => {
+  const instance = gameInstances.get(id)
+  if(!instance){ //TODO: or delete instance instead of restart?
+    console.log("CANNOT TERMINATE INSTANCE ", id, " DOES NOT EXIST");
+    return;
+  }
+  console.log(id, ": game over")
+  io.to(id).emit("gameOver")
   //terminate session in 10s
   setTimeout(() => {
-    console.log("restarting instance")
+    console.log(id, ": restarting instance")
     instance.gameIsStarted = false //avoid quick reconnect issues but keeps ids
     disconnectOldSocketIfExisting(instance.wId)
     disconnectOldSocketIfExisting(instance.bId)
-    gameInstance = defaultGameInstance() //TODO: clear in map or whatever later
-    !!true
+    const restatedInstance = {...defaultGameInstance(), wToken:instance.wToken, id:instance.id}
+    gameInstances.set(instance.id, restatedInstance)
   }, GAME_RESTART_TIME)
 }
 
@@ -78,6 +108,8 @@ const disconnectOldSocketIfExisting = (socketId ?: string) => {
 const handleSocketConnection = (socket, token) => {
   let col = token.endsWith('w') ? 'w' : 'b';
 
+  const gameInstance = getGameInstanceOfPlayer(token)
+  if(!gameInstance){return;}
 
   //keep only latest connection alive
   if(col === 'w'){
@@ -94,16 +126,16 @@ const handleSocketConnection = (socket, token) => {
 
 
   socket.emit('color', col)
-  console.log(socket.id, ' connected as player : ', col);
+  console.log(gameInstance.id, ": ", socket.id, ' connected as player : ', col);
 
   if(!gameInstance.gameIsStarted && gameInstance.bId && gameInstance.wId){
-    console.log("both players connected, starting game");
+    console.log(gameInstance.id, ": both players connected, starting game");
     gameInstance.gameIsStarted = true
     const state = getLastGameState(gameInstance)
     state.wLastMoveTime = performance.now()
     io.to(gameInstance.id).emit('gameInit', state)
   } else if (gameInstance.gameIsStarted){
-    console.log(col, "player reconnected, sending game state");
+    console.log(gameInstance.id, ": player ", socket.id, " reconnected, sending game state");
     //TODO: send whole history, maybe sequence of moves and reconstruct on client
     //or compact serialized gamestate like before
     const timerUpdatedState = getLastGameState(gameInstance)
@@ -136,9 +168,15 @@ io.on('connection', (socket) => {
   //TODO: authenticate requests
   const id = socket.id
   const token : string = socket.handshake.query.token as string
+  
+  const gameInstance = getGameInstanceOfPlayer(token)
+  if(!gameInstance){
+    socket.disconnect()
+    return;  
+  }
 
   socket.on('disconnect', () => {
-    console.log(id, ' disconnected');
+    console.log(gameInstance.id, ": ", id, ' disconnected');
     if(gameInstance.bId === id){
       gameInstance.bId = undefined
     }
@@ -151,16 +189,16 @@ io.on('connection', (socket) => {
     if(!token.endsWith(gameInstance.gameStates[gameInstance.gameStates.length - 1].turn)){ 
       callback({status:"Move not allowed"})
     }
-      console.log(id, " is moving from ", fromTo.from, " to ", fromTo.to);
+      console.log(gameInstance.id, ": ", id, " is moving from ", fromTo.from, " to ", fromTo.to);
       const newState = move(fromTo.from, fromTo.to, getLastGameState(gameInstance));
       gameInstance.gameStates.push(newState)
       if(newState.finished) {
         io.to(gameInstance.id.toString()).emit("newState", newState)
-        terminateGameInstance(gameInstance)
+        terminateGameInstance(gameInstance.id)
       } else {
         clearTimeout(gameInstance.timerTimeoutId)
         const newTimeroutId = setTimeout( () => {
-          terminateGameInstance(gameInstance)
+          terminateGameInstance(gameInstance.id)
         }, newState[newState.turn + "TimeLeft"])
         gameInstance.timerTimeoutId = newTimeroutId
         io.to(gameInstance.id.toString()).emit("newState", newState)
