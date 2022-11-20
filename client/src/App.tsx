@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Board from "./Board"
@@ -20,8 +20,7 @@ function App() {
 
   const [selectedPiece, setSelectedPiece] = useState<Coordinate>({x : 0, y : 0})
   const [gameStateHistoryIndex,setGameStateHistoryIndex] = useState(0)
-  const [gameState, setGameState] = useState<GameState[]>([{...startingGameState, wTimeLeft:-1, bTimeLeft:-1, wLastMoveTime:performance.now(), bLastMoveTime:performance.now()}])
-  // const [gameStateHistory, setGameStateHistory] = useState<GameState[]>([])
+  const [gameStates, setGameStates] = useState<GameState[]>([{...startingGameState, wTimeLeft:5000}])
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [playerTurn, setPlayerTurn] = useState('w')
   const [draggingPiece, setDraggingPiece] = useState(false)
@@ -47,7 +46,7 @@ function App() {
     intervalIds.push(id) //useing setState did not work with React.Strict mode on and one of the timers would not get cleared
     setIntervalIds(intervalIds);
     setCounter(performance.now())
-  }, [gameState, playing])
+  }, [gameStates, playing])
 
 
   useEffect( () => {
@@ -87,17 +86,19 @@ function App() {
     socket.on('gameInit', initialState => {
       console.log("received starting game state");
       setPlaying(true)
-      setGameState([initialState])
+      //using ...gameStates in setGameStates uses outdates values of when this handlers are created
+      gameStates.pop()
+      gameStates.push(initialState)
+      setGameStates(gameStates)
       setTimers({w:initialState.wTimeLeft, b:initialState.bTimeLeft})
       setGameStateHistoryIndex(0)
     })
 
     socket.on("newState", newState => {
-      
-      setGameStateHistoryIndex(gameState.length)
-      setGameState([...gameState, newState])
-      // const newState = move(selectedPiece, coords, gameState[gameState.length - 1])
-      // setGameState([...gameState, newState])      
+      debugger
+      setGameStateHistoryIndex(gameStates.length)
+      gameStates.push(newState)
+      setGameStates(gameStates)      
       setAllowedMoves(new Array(BOARD_SIZE).fill(false))
       setTimers({w:newState.wTimeLeft, b:newState.bTimeLeft})
     })
@@ -106,7 +107,7 @@ function App() {
       setPlaying(false)
       setTimeout(() => {
         setGameStateHistoryIndex(0)
-        setGameState([startingGameState])
+        setGameStates([startingGameState])
         socket.connect()
 
       }, GAME_RESTART_TIME + 2000)
@@ -129,10 +130,10 @@ function App() {
    */
   const selectTile = (coords : Coordinate | undefined, dragging : boolean) => {
     if(!playing || !coords){return;}
-    const piece = getPiece(coords, gameState[gameStateHistoryIndex])
+    const piece = getPiece(coords, gameStates[gameStateHistoryIndex])
     //go back to present if click on old state
-    if(gameStateHistoryIndex !== gameState.length - 1){
-      setGameStateHistoryIndex(gameState.length - 1)
+    if(gameStateHistoryIndex !== gameStates.length - 1){
+      setGameStateHistoryIndex(gameStates.length - 1)
     }
     //unselect if cursor outside board
     if(!coords){
@@ -141,7 +142,7 @@ function App() {
     else if (!allowed[coords.x + BOARD_SIZE*coords.y]){
       if(!dragging && piece && piece.color === playerColor){
         setSelectedPiece({x:coords.x, y:coords.y})
-        const moves = getAllowedMovesForPieceAtCoordinate(coords, gameState[gameStateHistoryIndex]);
+        const moves = getAllowedMovesForPieceAtCoordinate(coords, gameStates[gameStateHistoryIndex]);
         setAllowedMoves(moves)
       } else {
         //unselect pieces if dragging stoped over friendly piece
@@ -171,13 +172,13 @@ function App() {
   const changeViewedState = (command : string) => {
     switch (command) {
       case 'f':
-        setGameStateHistoryIndex(Math.min(gameState.length - 1, gameStateHistoryIndex+1))
+        setGameStateHistoryIndex(Math.min(gameStates.length - 1, gameStateHistoryIndex+1))
         break;
       case 'b':
         setGameStateHistoryIndex(Math.max(0, gameStateHistoryIndex-1))
         break;
       case 'p':
-        setGameStateHistoryIndex(gameState.length - 1)
+        setGameStateHistoryIndex(gameStates.length - 1)
         break;
     }
   }
@@ -187,7 +188,7 @@ function App() {
 
   const updateTimers = () => {
     const {w, b} = timers
-    if(gameState[gameState.length-1].turn === 'w'){
+    if(gameStates[gameStates.length-1].turn === 'w'){
       setTimers({w:Math.max(w-(performance.now() - counter!), 0),b:b})
     } else {
       setTimers({w:w,b:Math.max(b-(performance.now() - counter!), 0)})
@@ -216,13 +217,13 @@ function App() {
         <input onChange={v => setToken(v.target.value)}></input>
       </header>
       <div className='App-body'>
-      {gameState[gameStateHistoryIndex].finished ? <p>"Winner " + {gameState[gameState.length - 1].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
-        {gameState[gameStateHistoryIndex].stalemate ? <p>"There has been a stalemate!!!!"</p> : <></>}
+      {gameStates[gameStateHistoryIndex].finished ? <p>"Winner " + {gameStates[gameStates.length - 1].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
+        {gameStates[gameStateHistoryIndex].stalemate ? <p>"There has been a stalemate!!!!"</p> : <></>}
           <Board 
             onClickSelect={selectTile}
             color={playerColor}
-            gameState={gameState[gameStateHistoryIndex]}
-            oldState={gameStateHistoryIndex !== gameState.length-1}
+            gameState={gameStates[gameStateHistoryIndex]}
+            oldState={gameStateHistoryIndex !== gameStates.length-1}
             highlighted={allowed}
             timers={timers}
             />
