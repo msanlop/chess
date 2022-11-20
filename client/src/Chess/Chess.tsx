@@ -368,27 +368,6 @@ const getBoardWithMovedPiece = (from: Coordinate, to:Coordinate, board: (Piece |
     return newBoard
 }
 
-export const getUpdateTimers = (state : GameState) => {
-    let wNewTimeLeft = state.wTimeLeft;
-    let bNewTimeLeft = state.bTimeLeft;
-    let bNewLastMoveTime = state.bLastMoveTime;
-    let wNewLastMoveTime = state.wLastMoveTime;
-    if(state.turn == 'w'){
-        wNewLastMoveTime = performance.now()
-        wNewTimeLeft =  wNewTimeLeft - (wNewLastMoveTime - bNewLastMoveTime!)
-    } else {
-        bNewLastMoveTime = performance.now()
-        bNewTimeLeft =  bNewTimeLeft - (bNewLastMoveTime - wNewLastMoveTime!)
-    }
-
-    return {
-        wLastMoveTime : wNewLastMoveTime,
-        bLastMoveTime : bNewLastMoveTime,
-        wTimeLeft : Math.max(wNewTimeLeft, 0),
-        bTimeLeft : Math.max(bNewTimeLeft, 0),
-        }
-}
-
 /**
  * Moves a piece and returns the new game state
  * 
@@ -407,7 +386,17 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
     const newTurn = state.turn === 'w' ? 'b' : 'w';
     
     //get new timers
-    
+    let wNewTimeLeft = state.wTimeLeft;
+    let bNewTimeLeft = state.bTimeLeft;
+    let bNewLastMoveTime = state.bLastMoveTime;
+    let wNewLastMoveTime = state.wLastMoveTime;
+    if(state.turn == 'w'){
+        wNewLastMoveTime = performance.now()
+        wNewTimeLeft =  wNewTimeLeft - (wNewLastMoveTime - bNewLastMoveTime!)
+    } else {
+        bNewLastMoveTime = performance.now()
+        bNewTimeLeft =  bNewTimeLeft - (bNewLastMoveTime - wNewLastMoveTime!)
+    }
 
     let wCatsle = state.wCanCastle
     let bCatsle = state.bCanCastle
@@ -451,7 +440,10 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
         check:check,
         finished:cantMove,
         stalemate:cantMove && !check,
-        ...getUpdateTimers(state),
+        wLastMoveTime : wNewLastMoveTime,
+        bLastMoveTime : bNewLastMoveTime,
+        wTimeLeft : wNewTimeLeft,
+        bTimeLeft : bNewTimeLeft,
         wCanCastle : wCatsle,
         bCanCastle : bCatsle,
     }

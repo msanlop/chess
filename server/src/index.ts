@@ -1,6 +1,6 @@
 import * as http from 'http'
 import {Server} from 'socket.io'
-import { GameState, move, startingGameState } from './Chess/Chess';
+import { GameState, getUpdateTimers, move, startingGameState } from './Chess/Chess';
 
 const PORT = 8080
 const GAME_RESTART_TIME = 10000
@@ -10,21 +10,28 @@ interface GameInstance {
   //socket ids of connected clients, a single connection per side is allowed
   wId?: string;
   bId?: string;
-  gameState : GameState;
+  gameStates : GameState[];
   gameIsStarted:boolean;
+  timerTimeoutId ?: NodeJS.Timeout;
 }
 
 
-const defaultGameInstance : GameInstance = {
-  wId: undefined,
-  bId:undefined,
-  gameState:startingGameState, //TODO: make deep copy just incase
-  gameIsStarted:false,
-  id: "12314"
-};
+const defaultGameInstance = () : GameInstance => {
+  return JSON.parse(JSON.stringify(
+    {
+      wId: undefined,
+      bId:undefined,
+      gameStates: [startingGameState], //TODO: make deep copy just incase
+      gameIsStarted:false,
+      id: "12314"
+    }
+    ))
+}
+
+const getLastGameState = (gameInstance : GameInstance) => gameInstance.gameStates[gameInstance.gameStates.length - 1]
 
 // const playerGameInstances: Map<string, [GameInstance, string]> = new Map() TODO: allow for many game instances
-let gameInstance : GameInstance = JSON.parse(JSON.stringify(defaultGameInstance))
+let gameInstance : GameInstance = defaultGameInstance()
 
 
 const server = http.createServer((req, res) => {
@@ -41,17 +48,34 @@ const io = new Server(server, {
 });
 
 
+const terminateGameInstance = (instance : GameInstance) => {
+  console.log("game over")
+  io.to(instance.id.toString()).emit("gameOver")
+  //terminate session in 10s
+  setTimeout(() => {
+    console.log("restarting instance")
+    instance.gameIsStarted = false //avoid quick reconnect issues but keeps ids
+    disconnectOldSocketIfExisting(instance.wId)
+    disconnectOldSocketIfExisting(instance.bId)
+    gameInstance = defaultGameInstance() //TODO: clear in map or whatever later
+    !!true
+  }, GAME_RESTART_TIME)
+}
+
+
 const disconnectOldSocketIfExisting = (socketId ?: string) => {
   if(socketId && io.sockets.sockets.has(socketId)){
     io.sockets.sockets.get(socketId)!.disconnect();
   }
 }
 
+/**
+ * Handles a socket connection by assigning color, assigning the socket to the socket room of the game
+ * and starting the game for both players or sending the latest state to the player if reconnecting
+ * 
+ * 
+ */
 const handleSocketConnection = (socket, token) => {
-  if (token.length === 0){
-    console.log("invalid token, disconnecting");
-    socket.disconnect()
-  }
   let col = token.endsWith('w') ? 'w' : 'b';
 
 
@@ -75,15 +99,15 @@ const handleSocketConnection = (socket, token) => {
   if(!gameInstance.gameIsStarted && gameInstance.bId && gameInstance.wId){
     console.log("both players connected, starting game");
     gameInstance.gameIsStarted = true
-    io.to(gameInstance.id).emit('gameInit', gameInstance.gameState)
+    const state = getLastGameState(gameInstance)
+    io.to(gameInstance.id).emit('gameInit', state)
   } else if (gameInstance.gameIsStarted){
     console.log(col, "player reconnected, sending game state");
     //TODO: send whole history, maybe sequence of moves and reconstruct on client
     //or compact serialized gamestate like before
-    io.to(gameInstance.id).emit("gameInit", gameInstance.gameState)
+    const timerUpdatedState = getLastGameState(gameInstance)
+    io.to(gameInstance.id).emit("gameInit", {...timerUpdatedState, ...getUpdateTimers(timerUpdatedState)})
   }
-
-  console.log(gameInstance.wId, gameInstance.bId);
 }
 
 /**
@@ -123,26 +147,24 @@ io.on('connection', (socket) => {
   })
 
   socket.on('move', (fromTo, callback) => {
-    if(token.endsWith(gameInstance.gameState.turn)){
-      console.log(id, " is moving from ", fromTo.from, " to ", fromTo.to);
-      const newState = move(fromTo.from, fromTo.to, gameInstance.gameState);
-      gameInstance.gameState = newState
-      if(newState.finished) {
-        io.to(gameInstance.id.toString()).emit("newState", gameInstance.gameState)
-        io.to(gameInstance.id.toString()).emit("gameOver")
-        //terminate session in 10s
-        setTimeout(() => {
-          disconnectOldSocketIfExisting(gameInstance.wId)
-          disconnectOldSocketIfExisting(gameInstance.bId)
-          gameInstance = JSON.parse(JSON.stringify(defaultGameInstance))
-        }, GAME_RESTART_TIME)
-      } else {
-        io.to(gameInstance.id.toString()).emit("newState", gameInstance.gameState)
-      }
-      callback({status:"ok"})
-    } else {
+    if(!token.endsWith(gameInstance.gameStates[gameInstance.gameStates.length - 1].turn)){ 
       callback({status:"Move not allowed"})
     }
+      console.log(id, " is moving from ", fromTo.from, " to ", fromTo.to);
+      const newState = move(fromTo.from, fromTo.to, getLastGameState(gameInstance));
+      gameInstance.gameStates.push(newState)
+      if(newState.finished) {
+        io.to(gameInstance.id.toString()).emit("newState", newState)
+        terminateGameInstance(gameInstance)
+      } else {
+        clearTimeout(gameInstance.timerTimeoutId)
+        const newTimeroutId = setTimeout( () => {
+          terminateGameInstance(gameInstance)
+        }, newState[newState.turn + "TimeLeft"])
+        gameInstance.timerTimeoutId = newTimeroutId
+        io.to(gameInstance.id.toString()).emit("newState", newState)
+      }
+      callback({status:"ok"})
   })
 
   handleSocketConnection(socket, token)
