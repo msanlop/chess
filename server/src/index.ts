@@ -100,6 +100,7 @@ const handleSocketConnection = (socket, token) => {
     console.log("both players connected, starting game");
     gameInstance.gameIsStarted = true
     const state = getLastGameState(gameInstance)
+    state.wLastMoveTime = performance.now()
     io.to(gameInstance.id).emit('gameInit', state)
   } else if (gameInstance.gameIsStarted){
     console.log(col, "player reconnected, sending game state");

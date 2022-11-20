@@ -87,7 +87,7 @@ function App() {
       console.log("received starting game state");
       setPlaying(true)
       //using ...gameStates in setGameStates uses outdates values of when this handlers are created
-      gameStates.pop()
+      while(gameStates.pop());
       gameStates.push(initialState)
       setGameStates(gameStates)
       setTimers({w:initialState.wTimeLeft, b:initialState.bTimeLeft})
@@ -95,7 +95,6 @@ function App() {
     })
 
     socket.on("newState", newState => {
-      debugger
       setGameStateHistoryIndex(gameStates.length)
       gameStates.push(newState)
       setGameStates(gameStates)      

@@ -35,7 +35,7 @@ export interface GameState {
     readonly check : boolean;
     readonly finished : boolean;
     readonly stalemate : boolean;
-    readonly wLastMoveTime ?: number;
+    wLastMoveTime ?: number; //for the server to set the game start time at last moment
     readonly bLastMoveTime ?: number;
     readonly wTimeLeft : number;
     readonly bTimeLeft : number;
@@ -66,8 +66,6 @@ export const startingGameState = {
     check:false, 
     finished:false, 
     stalemate:false,
-    wLastMoveTime : 0,
-    bLastMoveTime : 0,
     wTimeLeft : STARTING_TIME,
     bTimeLeft : STARTING_TIME,
     wCanCastle : [true, true],
@@ -371,7 +369,7 @@ const getBoardWithMovedPiece = (from: Coordinate, to:Coordinate, board: (Piece |
 export const getUpdateTimers = (state : GameState) => {
     let wNewTimeLeft = state.wTimeLeft;
     let bNewTimeLeft = state.bTimeLeft;
-    let bNewLastMoveTime = state.bLastMoveTime;
+    let bNewLastMoveTime = state.bLastMoveTime ? state.bLastMoveTime : performance.now();
     let wNewLastMoveTime = state.wLastMoveTime;
     if(state.turn == 'w'){
         wNewLastMoveTime = performance.now()
