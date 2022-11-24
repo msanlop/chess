@@ -2,6 +2,9 @@
 export const BOARD_SIZE = 8;
 export const STARTING_TIME = 300000;
 
+export const ALGEBRAIC_X_AXIS = [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' ]
+export const ALGEBRAIC_Y_AXIS = [ '1', '2', '3', '4', '5', '6', '7', '8' ]
+
 export const starterPosition : (Piece | null)[] = [
   {"type": "r", "color": "b"},{"type": "k", "color": "b"},{"type": "b", "color": "b"},{"type": "q", "color": "b"},{"type": "K", "color": "b"},{"type": "b", "color": "b"},{"type": "k", "color": "b"},{"type": "r", "color": "b"},
   {"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},{"type": "p", "color": "b"},
@@ -15,7 +18,7 @@ export const starterPosition : (Piece | null)[] = [
 
 
 
-interface Piece {
+export interface Piece {
     readonly type: string;
     readonly color: string;
 }
@@ -93,6 +96,11 @@ const correctPawnDirections = (directions:number[][], color:string) : number[][]
     ( color === 'b' && tuple[1] > 0 )
     || ( color === 'w' && tuple[1] < 0 )
 );
+}
+
+export const coordinateToAlgebraic = (coord : Coordinate) => {
+    if(isOutOfBounds(coord)) {return 'invalid move'}
+    return ALGEBRAIC_X_AXIS[coord.x].concat(ALGEBRAIC_Y_AXIS[coord.y])
 }
     
 
@@ -410,6 +418,7 @@ export const move = (from : Coordinate, to:Coordinate, state:GameState) : GameSt
     let wCatsle = state.wCanCastle
     let bCatsle = state.bCanCastle
 
+    //update castle permissions and move rook if
     if (from.x === 0 && from.y === 0){
         bCatsle[0] = false
     }

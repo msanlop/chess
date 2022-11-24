@@ -2,7 +2,7 @@ import * as http from 'http'
 import test from 'node:test';
 import {Server} from 'socket.io'
 import { idText } from 'typescript';
-import { BOARD_SIZE, Coordinate, GameState, getAllowedMovesForPieceAtCoordinate, getUpdateTimers, move, startingGameState } from './Chess/Chess';
+import { BOARD_SIZE, Coordinate, coordinateToAlgebraic, GameState, getAllowedMovesForPieceAtCoordinate, getUpdateTimers, move, startingGameState } from './Chess/Chess';
 
 const PORT = 8080
 const GAME_RESTART_TIME = 10000
@@ -209,9 +209,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const fromMsg = `(${from.x}, ${from.y})`
-    const toMsg = `(${to.x}, ${to.y})`
-    logAndEmit(gameInstance.id, socketId + " is moving from " + fromMsg + " to " + toMsg);
+    logAndEmit(gameInstance.id, socketId + " is moving from " + coordinateToAlgebraic(from) + " to " + coordinateToAlgebraic(to));
     const newState = move(from, to, getLastGameState(gameInstance));
     gameInstance.gameStates.push(newState)
     if(newState.finished) {

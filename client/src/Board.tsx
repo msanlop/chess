@@ -3,11 +3,9 @@ import Square from "./Square";
 import './Board.css'
 import { isPropertySignature } from "typescript";
 import { pieceIcons } from "./res/Pieces";
-import { BOARD_SIZE, Coordinate, GameState, getPiece, Piece} from "./Chess/Chess";
+import { ALGEBRAIC_X_AXIS, ALGEBRAIC_Y_AXIS, BOARD_SIZE, Coordinate, GameState, getPiece, Piece} from "./Chess/Chess";
 import BoardCoordinate from "./BoardCoordinate";
 import Timer from "./Timer";
-
-const uiCoordinatesArray = " abcdefgh".split('')
 
 interface BoardProps {
     onClickSelect : (coords ?: Coordinate, dragging ?: boolean) => void ;
@@ -26,6 +24,7 @@ function Board(props:BoardProps) {
     const [dragging, setDragging] = useState(false)
     const [draggedPieceIndex, setDraggedPieceIndex] = useState(-1)
 
+    const isBlack = props.color === 'b'
     /**
      * if dragging a piece, updates the piece position to follow mouse cursos
      */
@@ -81,8 +80,16 @@ function Board(props:BoardProps) {
         props.onClickSelect()
     }
 
+    const invertArray = (board : any[]) : any[]  => {
+        const temp = [...board]
+        return temp.reverse()
+    }
 
-    const drawBoard = props.color === 'w' ? props.gameState.board : props.gameState.board.reverse();
+    const drawBoard = isBlack ? invertArray(props.gameState.board) : props.gameState.board;
+    const drawHighlighted = isBlack ? invertArray(props.highlighted) : props.highlighted;
+    
+    // const drawBoard = [null];
+    
     return (
         <div className="chess-board" 
             onMouseMove={followMouseCursor}
@@ -90,12 +97,12 @@ function Board(props:BoardProps) {
             >
             <Timer timerValue={props.timers.b} color="b"/>
 
-            {/* <img src={pieceIcons.get("wq")!} style={{position:"absolute", top:draggingCoords.y, left:draggingCoords.x}}></img> */}
             <ul>
-                {drawBoard.map( (piece: (Piece | null), index: number) => {
-                    // if(index !== 4){return;}
-                    const [x,y] = [index%BOARD_SIZE, index/BOARD_SIZE >> 0]
-                    //TODO: fix unecessary redraws
+                {/* This is a mess and not ready to allow for rendering from different side. Refactor if further changes needed */}
+                {props.gameState.board.map( (piece: (Piece | null), index: number) => {
+                    const drawIndex = isBlack ? BOARD_SIZE*BOARD_SIZE - 1 - index : index
+                    const [x,y] = [drawIndex%BOARD_SIZE, drawIndex/BOARD_SIZE >> 0]
+                    
                     return (
                         <>
 
@@ -105,19 +112,19 @@ function Board(props:BoardProps) {
                         <li key={index} onMouseMove={(e) => {}}>    
                             <Square 
                                 coords={{x,y}}
-                                piece={piece}
-                                highlighted={props.highlighted[index]}
+                                piece={drawBoard[index]}
+                                highlighted={drawHighlighted[index]}
                                 oldState={props.oldState}
                                 isInCheck={props.gameState.check 
-                                    && piece !== null 
-                                    && piece
-                                    && piece.type === 'K' 
-                                    && props.gameState.turn === piece.color}
+                                    && drawBoard[index] !== null 
+                                    && drawBoard[index]
+                                    && drawBoard[index].type === 'K' 
+                                    && props.gameState.turn === drawBoard[index].color}
                                 onClick={props.onClickSelect}
                                 onMouseDown={onMouseDown}
                                 onMouseUp={up}
                                 onMouseEnter={enter}
-                                draggingCoords={index === draggedPieceIndex && dragging ? draggingCoords: undefined}
+                                draggingCoords={drawIndex === draggedPieceIndex && dragging ? draggingCoords : undefined}
                                 dragHover={dragging && lastHoveredCoords!.x === x && lastHoveredCoords!.y === y} //TODO: only true for the hovered tile
                             />
                         </li>
@@ -126,8 +133,9 @@ function Board(props:BoardProps) {
                     }
                 )}
 
-                {/* draw indices at the bottom of the board */}
-                {uiCoordinatesArray.map(char => 
+                {/* draw indices at the bottom of the board, '' for padding */}
+                <BoardCoordinate char={''} /> 
+                {ALGEBRAIC_X_AXIS.map(char => 
                     <li key={char}>
                         <BoardCoordinate char={char} />
                     </li>

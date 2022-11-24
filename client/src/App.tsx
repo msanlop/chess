@@ -97,7 +97,6 @@ function App() {
       setGameStateHistoryIndex(gameStates.length)
       gameStates.push(newState)
       setGameStates(gameStates)      
-      setAllowedMoves(new Array(BOARD_SIZE).fill(false))
       setTimers({w:newState.wTimeLeft, b:newState.bTimeLeft})
     })
 
@@ -117,6 +116,8 @@ function App() {
       socket.connect()
     }
   }, [token])
+
+  useEffect( () => setAllowedMoves(new Array(BOARD_SIZE).fill(false)), [gameStates, gameStateHistoryIndex])
 
   /**
    * selectTile handles the piece moves/captures.
