@@ -11,7 +11,9 @@ const Timer = (props:any) => {
 
 
     return(
-        <div className={props.color + "-timer"}>{msToMin(props.timerValue)} </div>
+        <div className={props.color + "-timer"}>
+                {msToMin(props.timerValue)} 
+        </div>
     )
 }
 

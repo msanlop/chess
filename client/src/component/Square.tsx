@@ -1,9 +1,9 @@
 import React, { FC, useEffect, useState } from "react";
 import internal from "stream";
-import './Square.css'
-import {Coordinate, Piece} from './Chess/Chess'
+import '../style/Square.css'
+import {Coordinate, Piece} from '../Chess/Chess'
 import { isPropertySignature, reduceEachLeadingCommentRange } from "typescript";
-import {pieceIcons} from './res/Pieces'
+import {pieceIcons} from '../res/Pieces'
 
 //TODO: get something better...
 const BLACK_BACKGROUND_COLOR = "#3178C6"

@@ -1,15 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
 import './App.css';
-import Board from "./Board"
+import Board from "./component/Board"
 import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosition, move, getPiece, GameState, startingGameState, STARTING_TIME} from "./Chess/Chess"
-import InfoPanel from "./InfoPanel"
-import Timer from './Timer';
+// import InfoPanel from "./Components/InfoPanel"
+// import Timer from './Timer';
 import {io, Socket} from "socket.io-client"
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import { tokenToString } from 'typescript';
 import { debug } from 'console';
-import HistoryControls from './HistoryControls';
+import HistoryControls from './component/HistoryControls';
 
 const GAME_RESTART_TIME = 10000
 let socket : Socket<DefaultEventsMap, DefaultEventsMap>;
@@ -22,7 +20,6 @@ function App() {
   const [gameStateHistoryIndex,setGameStateHistoryIndex] = useState(0)
   const [gameStates, setGameStates] = useState<GameState[]>([{...startingGameState, wTimeLeft:5000}])
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
-  const [playerTurn, setPlayerTurn] = useState('w')
   const [draggingPiece, setDraggingPiece] = useState(false)
   const [timers, setTimers] = useState({w:STARTING_TIME, b:STARTING_TIME})
   const [intervalIds, setIntervalIds] = useState<number[]>([])

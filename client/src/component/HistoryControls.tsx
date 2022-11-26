@@ -1,6 +1,6 @@
-import {ReactComponent as SingleArrow} from './res/single-arrow.svg'
-import {ReactComponent as DoubleArrow} from './res/double-arrow.svg'
-import './HistoryControls.css'
+import {ReactComponent as SingleArrow} from '../res/single-arrow.svg'
+import {ReactComponent as DoubleArrow} from '../res/double-arrow.svg'
+import '../style/HistoryControls.css'
 
 const HistoryControls = (props:any) => {
     return(

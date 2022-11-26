@@ -34,7 +34,7 @@ h2 {
 .App-body {
   background-color: #282c34;
   /* overflow-y: hidden; */
-  height: 100%;
+  /* height: 100%; */
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
@@ -72,41 +72,4 @@ h2 {
 ul {
   margin: 0;
   padding: 0;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-
-.b-timer {
-  /* text-align: left; */
-  margin: 1%;
-  justify-self: left;
-  background-color: black;
-  border-radius: 100px;
-  color: white;
-  width: fit-content;
-  height: fit-content;
-  padding: 1%;
-}
-
-.w-timer {
-  margin: 1%;
-  /* position: relative; */
-  /* left: 75%; */
-  /* align-self: right; */
-  justify-self: right;
-
-  background-color: white;
-  border-radius: 100px;
-  color: black;
-  width: fit-content;
-  height: fit-content;
-  padding: 1%;
 }

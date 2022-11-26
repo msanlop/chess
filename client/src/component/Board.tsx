@@ -1,11 +1,11 @@
 import React, { Key, useState } from "react";
 import Square from "./Square";
-import './Board.css'
+import '../style/Board.css'
 import { isPropertySignature } from "typescript";
-import { pieceIcons } from "./res/Pieces";
-import { ALGEBRAIC_X_AXIS, ALGEBRAIC_Y_AXIS, BOARD_SIZE, Coordinate, GameState, getPiece, Piece} from "./Chess/Chess";
+import { pieceIcons } from "../res/Pieces";
+import { ALGEBRAIC_X_AXIS, ALGEBRAIC_Y_AXIS, BOARD_SIZE, Coordinate, GameState, getPiece, Piece} from "../Chess/Chess";
 import BoardCoordinate from "./BoardCoordinate";
-import Timer from "./Timer";
+import Timer from "./Timer"
 
 interface BoardProps {
     onClickSelect : (coords ?: Coordinate, dragging ?: boolean) => void ;

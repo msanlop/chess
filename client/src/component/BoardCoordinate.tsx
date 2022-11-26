@@ -1,4 +1,4 @@
-import './BoardCoordinate.css'
+import '../style/BoardCoordinate.css'
 interface CoordinateCharacter {
     char : string
 }
