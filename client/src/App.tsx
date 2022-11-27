@@ -8,6 +8,7 @@ import {io, Socket} from "socket.io-client"
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { debug } from 'console';
 import HistoryControls from './component/HistoryControls';
+import { ChatBox } from './component/ChatBox';
 
 const GAME_RESTART_TIME = 10000
 let socket : Socket<DefaultEventsMap, DefaultEventsMap>;
@@ -27,6 +28,7 @@ function App() {
   const [playerColor, setPlayerColor] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [token, setToken] = useState('')
+  const [messages, setMessages] = useState<string[]>([])
 
   // const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>()
   
@@ -216,6 +218,7 @@ function App() {
             />
         <div className='right-panel'>
         <HistoryControls onClick={changeViewedState}/>
+        <ChatBox messages={messages}/>
 
           {/* <InfoPanel 
             onClick={changeViewedState}

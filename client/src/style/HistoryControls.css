@@ -6,6 +6,7 @@
     background-color: white;
     border-radius: 10px;
     border: 10px solid #3178C6;
+    height: fit-content;
     /* position: relative; */
     /* top: 100%;  */
 }

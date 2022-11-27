@@ -1,0 +1,22 @@
+.chat-feed {
+    position: relative;
+    align-content: left;
+    width: 100%;
+    top: 0;
+    background-color: rgb(231, 208, 178);
+}
+
+
+
+.chat-feed p {
+    position: relative;
+    text-align: left;
+    width: 100%;
+}
+
+
+.chat-form {
+    position: relative;
+    top: 100%;
+    width: 100%;
+}
