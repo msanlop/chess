@@ -1,5 +1,6 @@
 import * as http from 'http'
 import test from 'node:test';
+import { escape } from 'querystring';
 import {Server} from 'socket.io'
 import { idText } from 'typescript';
 import { BOARD_SIZE, Coordinate, coordinateToAlgebraic, GameState, getAllowedMovesForPieceAtCoordinate, getUpdateTimers, move, startingGameState } from './Chess/Chess';
@@ -66,9 +67,59 @@ const padId = (id:string) => {
 }
 const serverLog = (instanceId:string, content:string) => console.log((new Date).toISOString() + " -- " + padId(instanceId), ": " + content)
 
-const logAndEmit = (instanceId : string, content : string) => {
-  io.to(instanceId).emit("info", content)
-  serverLog(instanceId, content)
+interface GameEvent {
+  gameInstanceId : string;
+  type : string;
+  content ?: string;
+  player : string;
+  socketId : string;
+}
+
+const logAndEmit = (event : GameEvent) => {
+  let serverString = ""
+  let clientString = ""
+  const playerString = event.player === "w" ? "white" : "black";
+
+  switch (event.type) {
+    case "chat":
+      serverString += event.content
+      clientString += event.content
+      break;
+    case "reconnect" :
+      serverString += `has reconnected as ${playerString}`
+      clientString += playerString + " has reconnected"
+      break;
+    case "connect" :
+      serverString += `${event.socketId} connected as ${playerString}`
+      clientString += `${playerString} has connected`
+      break;
+    case "gameStart" :
+      serverString += "both players connected"
+      break;
+    case "disconnect" :
+      serverString += `${event.socketId} disconnected`
+      clientString += `${playerString} has disconnected`
+      break;
+    case "move" :
+      serverString += `${event.socketId} (${event.content})`
+      clientString += event.content
+      break;
+    case "end" :
+      serverString += event.content
+      clientString += event.content
+      break;
+    case "restart" :
+      serverString += "restarting game"
+      clientString = serverString
+      break;
+    default:
+      break;
+  }
+  
+  serverLog(event.gameInstanceId, serverString)
+  if(clientString.length !== 0){
+    io.to(event.gameInstanceId).emit(event.type === "chat" ? "newChat" : "newInfo", clientString)
+  } 
 }
 
 
@@ -92,11 +143,30 @@ const terminateGameInstance = (id : string) => {
     serverLog(id, "CANNOT TERMINATE INSTANCE " + id + " DOES NOT EXIST");
     return;
   }
-  logAndEmit(id, "game over")
+  let endMessage = "game over : "
+  const endState =getLastGameState(instance)
+  if(endState.stalemate){
+    endMessage += "there was a draw!"
+  } else {
+    const winner = endState.turn === "w" ? "b" : "w"
+    endMessage += "the winner is " + winner
+  }
+  logAndEmit({
+    gameInstanceId: id,
+    type : "end",
+    player : '',
+    socketId : '',
+    content : endMessage
+  })
   io.to(id).emit("gameOver")
   //terminate session in 10s
   setTimeout(() => {
-    logAndEmit(id, "restarting instance")
+    logAndEmit({
+      gameInstanceId: id,
+      type : "restart",
+      player : '',
+      socketId : ''
+    })
     instance.gameIsStarted = false //avoid quick reconnect issues but keeps ids
     disconnectOldSocketIfExisting(instance.wId)
     disconnectOldSocketIfExisting(instance.bId)
@@ -119,8 +189,8 @@ const disconnectOldSocketIfExisting = (socketId ?: string) => {
  * 
  */
 const handleSocketConnection = (socket, token) => {
-  let col = token.endsWith('w') ? 'w' : 'b';
   const gameInstance = getGameInstanceOfPlayer(token)
+  let col = gameInstance?.wToken === token ? 'w' : 'b'
   if(!gameInstance){return;}
 
   //keep only latest connection alive
@@ -138,16 +208,31 @@ const handleSocketConnection = (socket, token) => {
 
 
   socket.emit('color', col)
-  logAndEmit(gameInstance.id, socket.id + 'connected as player : ' + col);
+  logAndEmit({
+    gameInstanceId: gameInstance.id,
+    type : "connect",
+    player : col,
+    socketId : socket.id
+  })
 
   if(!gameInstance.gameIsStarted && gameInstance.bId && gameInstance.wId){
-    logAndEmit(gameInstance.id, "both players connected, starting game");
+    logAndEmit({
+      gameInstanceId: gameInstance.id,
+      type : "gameStart",
+      player : '',
+      socketId : ''
+    })
     gameInstance.gameIsStarted = true
     const state = getLastGameState(gameInstance)
     state.wLastMoveTime = performance.now()
     io.to(gameInstance.id).emit('gameInit', state)
   } else if (gameInstance.gameIsStarted){
-    logAndEmit(gameInstance.id, "player " + socket.id + " reconnected, sending game state");
+    logAndEmit({
+      gameInstanceId: gameInstance.id,
+      type : "reconnect",
+      player : col,
+      socketId : socket.id
+    })
     //TODO: send whole history, maybe sequence of moves and reconstruct on client
     //or compact serialized gamestate like before
     const timerUpdatedState = getLastGameState(gameInstance)
@@ -186,15 +271,27 @@ io.on('connection', (socket) => {
     socket.disconnect()
     return;  
   }
+  let col = gameInstance?.wToken === token ? 'white' : 'black';
 
   socket.on('disconnect', () => {
-    logAndEmit(gameInstance.id, socketId +' disconnected');
+    logAndEmit({gameInstanceId : gameInstance.id, type:"disconnect", player:col, socketId:socketId});
     if(gameInstance.bId === socketId){
       gameInstance.bId = undefined
     }
     if(gameInstance.wId === socketId){
       gameInstance.wId = undefined
     }
+  })
+
+  socket.on("chatMessage", (input : string) => {
+    const escapedString = (input)
+    logAndEmit({
+      gameInstanceId:gameInstance.id, 
+      type: "chat",
+      player: col,
+      socketId: socketId,
+      content: col + ": " + escapedString
+    })
   })
 
   socket.on('move', (from : Coordinate, to:Coordinate, callback) => {
@@ -209,7 +306,13 @@ io.on('connection', (socket) => {
       return;
     }
 
-    logAndEmit(gameInstance.id, socketId + " is moving from " + coordinateToAlgebraic(from) + " to " + coordinateToAlgebraic(to));
+    logAndEmit({
+      gameInstanceId:gameInstance.id, 
+      type:"move",
+      player:col,
+      socketId: socketId,
+      content: col + " moved from " + coordinateToAlgebraic(from) + " to " + coordinateToAlgebraic(to)
+    })
     const newState = move(from, to, getLastGameState(gameInstance));
     gameInstance.gameStates.push(newState)
     if(newState.finished) {

@@ -1,9 +1,13 @@
 .chat-feed {
     position: relative;
     align-content: left;
-    width: 100%;
-    top: 0;
-    background-color: rgb(231, 208, 178);
+    margin-top: 3%;
+    /* height: 40vw; */
+    width: 25vw;
+    height: 60vh;
+    overflow-x: scroll;
+    background-color: rgb(18, 32, 72);
+    overflow-y: scroll;
 }
 
 
@@ -14,9 +18,17 @@
     width: 100%;
 }
 
+#info {
+    font-size: calc(10px + 0.7vmin);
+    color: rgb(148, 148, 148);
+}
+
+#chat {
+    font-size: calc(10px + 1.2vmin);
+    color: white;
+}
 
 .chat-form {
     position: relative;
-    top: 100%;
     width: 100%;
 }

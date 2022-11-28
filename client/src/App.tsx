@@ -9,9 +9,9 @@ import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { debug } from 'console';
 import HistoryControls from './component/HistoryControls';
 import { ChatBox } from './component/ChatBox';
+import { useSocket } from './hook/useSocket';
 
 const GAME_RESTART_TIME = 10000
-let socket : Socket<DefaultEventsMap, DefaultEventsMap>;
 
 
 
@@ -28,7 +28,8 @@ function App() {
   const [playerColor, setPlayerColor] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [token, setToken] = useState('')
-  const [messages, setMessages] = useState<string[]>([])
+
+  const socket = useSocket(token)
 
   // const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>()
   
@@ -48,18 +49,10 @@ function App() {
 
 
   useEffect( () => {
-    
-    if(!token.endsWith('w') && !token.endsWith('b')){
-      return;
-    }
 
     if(!socket){
-      socket = io('http://localhost:8080', {
-        autoConnect: false,
-        query: {
-          token : token,
-        }
-      })
+      console.log("SOCKET UNDEFINED !!!");
+      return
     }
 
     socket.on("connect", () => {
@@ -114,7 +107,7 @@ function App() {
     if(!socket.connected){
       socket.connect()
     }
-  }, [token])
+  }, [socket])
 
   useEffect( () => setAllowedMoves(new Array(BOARD_SIZE).fill(false)), [gameStates, gameStateHistoryIndex])
 
@@ -148,8 +141,7 @@ function App() {
       }
     }
     else{
-      
-      if(socket.connected){
+      if(socket){
         socket.emit("move", selectedPieceCoords, coords, (response:any) => {
           console.log(response.status);
           setAllowedMoves(new Array(BOARD_SIZE).fill(false))
@@ -199,15 +191,9 @@ function App() {
       <header className="App-header">
         <h2> Chess</h2>
         <p>waltuh</p>
-        {/* <p>white time left</p> */}
-        {/* {msToMin(timers.w)} */}
-        {/* <p>black time left</p> */}
-        {/* {msToMin(timers.b)} */}
         <input onChange={v => setToken(v.target.value)}></input>
       </header>
       <div className='App-body'>
-      {gameStates[gameStateHistoryIndex].finished ? <p>"Winner " + {gameStates[gameStates.length - 1].turn=== 'w' ? 'b' : 'w'}</p> : <div> </div>}
-        {gameStates[gameStateHistoryIndex].stalemate ? <p>"There has been a stalemate!!!!"</p> : <></>}
           <Board 
             onClickSelect={selectTile}
             color={playerColor}
@@ -218,7 +204,7 @@ function App() {
             />
         <div className='right-panel'>
         <HistoryControls onClick={changeViewedState}/>
-        <ChatBox messages={messages}/>
+        <ChatBox connected={socket !== undefined && socket.connected}/>
 
           {/* <InfoPanel 
             onClick={changeViewedState}

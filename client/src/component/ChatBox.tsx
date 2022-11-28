@@ -1,19 +1,29 @@
-import { useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { useSocket } from '../hook/useSocket';
+import { SocketContext, SocketProvider } from '../SocketProvider';
 import '../style/ChatBox.css'
 
 interface ChatProps {
-    messages : string[];
+    connected : boolean;
 }
 
 
-
-//DO NOT LOOK AT THIS CODE !!!! I JUST WANT TO GET THIS DONE FAST
 export const ChatBox = (props:ChatProps) =>  {
     const [message, setMessage] = useState("")
+    const [messages, setMessages] = useState<string[][]>([])
+    const messagesRef = useRef<string[][]>([])
+    const socket = useSocket()
+
+    messagesRef.current = messages
+
+    
+    useEffect(() => {
+        socket?.on("newChat", (msg : string) => {setMessages([...messagesRef.current, ['chat', msg]])})
+        socket?.on("newInfo", (msg : string) => setMessages([...messagesRef.current, ['info', msg]]))
+    }, [props.connected])
 
     const sendMessage = (form : any) => {
-        console.log(message);
-        
+        socket?.emit('chatMessage', message)
         if(form) {
             form.preventDefault();
             form.target[0].value = ""
@@ -21,17 +31,22 @@ export const ChatBox = (props:ChatProps) =>  {
         setMessage("")
     }
     
-    // const onInputPress = (keyPressEvent : React.KeyboardEvent<HTMLInputElement>) => {
-    //     if(keyPressEvent.code === 'Enter' && !keyPressEvent.shiftKey){
-    //         // sendMessage(undefined)
-    //     }
-    // }
+    useEffect(() => scrollToBottom(), [messages])
+    
+    let endOfFeed : HTMLDivElement | null;
+    //scroll to invisible last element (https://stackoverflow.com/questions/37620694/how-to-scroll-to-bottom-in-react)
+    const scrollToBottom = () => {
+        endOfFeed?.scrollIntoView({ behavior: "smooth" });
+    }
 
     return(
-        <div className="chat-feed">
-            {props.messages.map(msg => 
-                <p>msg</p>    
-            )}
+        <div>
+            <div className="chat-feed">
+                {messages.map(msg => <p id={msg[0]}>{msg[1]}</p>)}
+                <div style={{ float:"left", clear: "both" }}
+                    ref={(el) => {endOfFeed = el}}>
+                </div>
+            </div>
 
             <form onSubmit={sendMessage} className="chat-form">
                 {/* <input className='chat-input'
