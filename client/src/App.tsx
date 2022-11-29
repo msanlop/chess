@@ -50,14 +50,7 @@ function App() {
 
   useEffect( () => {
 
-    if(!socket){
-      console.log("SOCKET UNDEFINED !!!");
-      return
-    }
-
-    socket.on("color", (col: string) => {
-      console.log(col);
-      
+    socket.on("color", (col: string) => {      
       if(!playerColor){
         setPlayerColor(col)
       }
@@ -132,7 +125,6 @@ function App() {
     else{
       if(socket){
         socket.emit("move", selectedPieceCoords, coords, (response:any) => {
-          console.log(response.status);
           setAllowedMoves(new Array(BOARD_SIZE).fill(false))
         })
       }
@@ -163,13 +155,6 @@ function App() {
     } else {
       setTimers({w:w,b:Math.max(b-(performance.now() - counter!), 0)})
     }
-    
-    // if(socket){
-    //   setInterval(() => {
-    //     socket[0].emit("msg", "hello world"+ w.toString())
-    //     console.log('sengind s.io message ');
-    //   }, 1000)
-    // }
     setCounter(performance.now())
   }
   
