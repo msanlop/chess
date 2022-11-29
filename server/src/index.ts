@@ -78,7 +78,7 @@ interface GameEvent {
 const logAndEmit = (event : GameEvent) => {
   let serverString = ""
   let clientString = ""
-  const playerString = event.player === "w" ? "white" : "black";
+  const playerString = event.player === "white" ? "white" : "black";
 
   switch (event.type) {
     case "chat":
@@ -97,7 +97,7 @@ const logAndEmit = (event : GameEvent) => {
       serverString += "both players connected"
       break;
     case "disconnect" :
-      serverString += `${event.socketId} disconnected`
+      serverString += `${event.socketId} disconnected (${playerString})`
       clientString += `${playerString} has disconnected`
       break;
     case "move" :
@@ -271,9 +271,12 @@ io.on('connection', (socket) => {
     socket.disconnect()
     return;  
   }
-  let col = gameInstance?.wToken === token ? 'white' : 'black';
+  const col = gameInstance?.wToken === token ? 'white' : 'black';
+  console.log(col);
+  
 
   socket.on('disconnect', () => {
+    console.log(gameInstance?.wToken, " is the white token rn")
     logAndEmit({gameInstanceId : gameInstance.id, type:"disconnect", player:col, socketId:socketId});
     if(gameInstance.bId === socketId){
       gameInstance.bId = undefined

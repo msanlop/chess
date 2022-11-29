@@ -55,26 +55,15 @@ function App() {
       return
     }
 
-    socket.on("connect", () => {
-      console.log("connection established");
-    })
-
-    socket.on("disconnect", () => {
-      console.log("connection lost");
-    })
-
     socket.on("color", (col: string) => {
       console.log(col);
       
       if(!playerColor){
         setPlayerColor(col)
-        console.log("I am playeing as ", col);
-        
       }
     })
 
     socket.on('gameInit', initialState => {
-      console.log("received starting game state");
       setPlaying(true)
       //using ...gameStates in setGameStates uses outdates values of when this handlers are created
       while(gameStates.pop());
