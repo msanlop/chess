@@ -5,10 +5,11 @@ import { escape } from 'querystring';
 import {Server} from 'socket.io'
 import { idText } from 'typescript';
 import { BOARD_SIZE, Coordinate, coordinateToAlgebraic, GameState, getAllowedMovesForPieceAtCoordinate, getUpdateTimers, move, startingGameState } from './Chess/Chess';
-import { GameInstance, initAndReturnSocket } from './sockets';
+import { defaultGameInstance, GameInstance, initAndReturnSocket } from './sockets';
 import path from 'path';
 import crypto from 'crypto'
 import bodyParser from 'body-parser'
+import { router } from 'websocket';
 
 const PORT = 8080
 const GAME_RESTART_TIME = 10000
@@ -17,7 +18,7 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended : false}));
+app.use(bodyParser.urlencoded());
 
 
 export const playerGameInstances: Map<string, string> = new Map() //TODO: allow for many game instances
@@ -25,7 +26,7 @@ export const gameInstances : Map<string, GameInstance> = new Map()
 const socket = initAndReturnSocket(server)
 
 const generateRandomPlayerId = () => {
-    const TOKEN_LENGTH = 20
+    const TOKEN_LENGTH = 15
     let randString;
     do {
         randString = crypto.randomBytes(TOKEN_LENGTH).toString('hex')
@@ -34,7 +35,7 @@ const generateRandomPlayerId = () => {
 }
 
 const generateRandomGameId = () => {
-    const TOKEN_LENGTH = 10
+    const TOKEN_LENGTH = 6
     let randString;
     do {
         randString = crypto.randomBytes(TOKEN_LENGTH).toString('hex')
@@ -42,25 +43,37 @@ const generateRandomGameId = () => {
     return randString
 }
 
-const serverLog = (...content) => console.log((new Date).toISOString() + " - " + content.join(''))
+const validUserId = (req, res, next) => {
+    const gameInstance = playerGameInstances.get(req.query.token)
+    if(!gameInstance){
+        res.write('You are not in any ongoing game.')
+        res.end()
+    } else {
+        next()
+    }
+}
+
+const serverLog = (...content : string[]) => console.log((new Date).toISOString() + " - " + content.join(''))
 
 app.get('/', (req, res) => {
     res.sendFile("index.html", {root: "./out/public"})
-    // res.sendFile(path.join(__dirname, "public/index.html"))
+});
+
+app.get('/play', validUserId, (req, res) => {
+    res.sendFile("game.html", {root: "./out/public"})
 });
 
 app.post('/create-game', (req, res) => {
-    serverLog("create body is")
     const token = generateRandomPlayerId()
     const gameId = generateRandomPlayerId()
+    //TODO: allow for starting black also
+    gameInstances.set(gameId, {...defaultGameInstance(), id:gameId, wToken:token, wId:token})
+    playerGameInstances.set(token, gameId)
     res.json({token: token, gameId:gameId})
 })
 
-app.post('/join-game', (req, res) => {
-    // serverLog("body is ", req.body, " ya heard")
-    console.log(req.body);
-    const gameId = req.body.gameId
-    console.log(gameInstances);
+app.get('/join-game', (req, res) => {
+    const gameId = req.query.gameId as string
     if(!gameId || !gameInstances.has(gameId)){
         res.send("Invalid game id.")
         res.end()
@@ -69,15 +82,15 @@ app.post('/join-game', (req, res) => {
 
     const token = generateRandomPlayerId()
     const instance = gameInstances.get(gameId)!
+    playerGameInstances.set(token, gameId)
     
-    if(!instance.wId){
-        instance.wId = token
-    } else if(!instance.bId) {
-        instance.bId = token
+    if(!instance.wToken){
+        instance.wToken = token
+    } else if(!instance.bToken) {
+        instance.bToken = token
     } else {
-        res.send("Game is already full, try starting a new one.")
+        res.write("Game is already full, try starting a new one.")
         res.end()
-        return
     }
 
 

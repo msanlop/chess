@@ -7,16 +7,17 @@ import { SocketContext } from "../SocketProvider";
 export const useSocket = (token ?: string) => {
     const socket = useContext(SocketContext)
 
-    useEffect( () => {
-      if(token !== undefined && (token.endsWith('w') || token.endsWith('b'))){
-        socket.io.opts.query = {token : token}
-        if(!socket.connected) {
-          socket.io.opts.autoConnect = true
-          socket.connect()
-        }
-      }
+    //for testing use without server token and 'auth'
+    // useEffect( () => {
+    //   if(token !== undefined && (token.endsWith('w') || token.endsWith('b'))){
+    //     socket.io.opts.query = {token : token}
+    //     if(!socket.connected) {
+    //       socket.io.opts.autoConnect = true
+    //       socket.connect()
+    //     }
+    //   }
 
-    }, [token])
+    // }, [token])
     
     return socket
 }

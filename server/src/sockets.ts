@@ -13,6 +13,7 @@ export interface GameInstance {
     id: string;
     //socket ids of connected clients, a single connection per side is allowed
     wToken?: string;
+    bToken?: string;
     wId?: string;
     bId?: string;
     gameStates : GameState[];
@@ -20,19 +21,21 @@ export interface GameInstance {
     timerTimeoutId ?: NodeJS.Timeout;
   }
   
-export const initAndReturnSocket = (server) => {
-    const defaultGameInstance = () : GameInstance => {
-        return JSON.parse(JSON.stringify(
-        {
-            wToken : undefined,
-            wId: undefined,
-            bId:undefined,
-            gameStates: [startingGameState], //TODO: make deep copy just incase
-            gameIsStarted:false,
-            id: "0"
-        }
-        ))
+export const defaultGameInstance = () : GameInstance => {
+    return JSON.parse(JSON.stringify(
+    {
+        wToken : undefined,
+        bToken : undefined,
+        wId: undefined,
+        bId:undefined,
+        gameStates: [startingGameState], //TODO: make deep copy just incase
+        gameIsStarted:false,
+        id: "0"
     }
+    ))
+}
+
+export const initAndReturnSocket = (server) => {
     
     const getLastGameState = (gameInstance : GameInstance) => gameInstance.gameStates[gameInstance.gameStates.length - 1]
     
@@ -87,15 +90,15 @@ export const initAndReturnSocket = (server) => {
             clientString += `${event.player} has connected`
             break;
         case "gameStart" :
-            serverString += "both players connected, starting game"
-            serverString += "Starting game"
+            serverString += "Both players connected, starting game."
+            clientString += "Both players connected, starting game."
             break;
         case "disconnect" :
             serverString += `${event.socketId} disconnected (${event.player})`
             clientString += `${event.player} has disconnected`
             break;
         case "move" :
-            serverString += `${event.socketId} (${event.content})`
+            serverString += `${event.socketId} ${event.content}`
             clientString += event.content
             break;
         case "end" :
@@ -106,15 +109,24 @@ export const initAndReturnSocket = (server) => {
             serverString += "restarting game"
             clientString = serverString
             break;
+        case "server-info":
+            serverString += event.content
+            clientString += event.content
+            break;
         default:
             break;
         }
         
-        socketServerLog(event.gameInstanceId, serverString)
+        if(event.type !== "server-info") {
+            socketServerLog(event.gameInstanceId, serverString)
+        }
         if(clientString.length !== 0){
-        io.to(event.gameInstanceId).emit(event.type === "chat" ? "newChat" : "newInfo", clientString)
+            io.to(event.gameInstanceId).emit(event.type === "chat" ? "newChat" : "newInfo", clientString)
         } 
     }
+
+    const BASE_URL = "localhost:8080"
+    const JOIN_URL = id => BASE_URL + "/join-game?gameId=" + id
     
     
     const getGameInstanceOfPlayer = (token: string) : (GameInstance | undefined) => {
@@ -137,13 +149,13 @@ export const initAndReturnSocket = (server) => {
         socketServerLog(id, "CANNOT TERMINATE INSTANCE " + id + " DOES NOT EXIST");
         return;
         }
-        let endMessage = "game over : "
+        let endMessage = "Game over : "
         const endState =getLastGameState(instance)
         if(endState.stalemate){
-        endMessage += "there was a draw!"
+        endMessage += "There was a draw!"
         } else {
-        const winner = endState.turn === "w" ? "b" : "w"
-        endMessage += "the winner is " + winner
+        const winner = endState.turn === "w" ? "black" : "white"
+        endMessage += "the winner is " + winner + "!"
         }
         logAndEmit({
         gameInstanceId: id,
@@ -263,9 +275,17 @@ export const initAndReturnSocket = (server) => {
         
         const gameInstance = getGameInstanceOfPlayer(token)
         if(!gameInstance){
-        socket.disconnect()
-        return;  
+            logAndEmit({
+                gameInstanceId: "NONE", 
+                type:"server-info",
+                player: '',
+                socketId: socketId,
+                content: "Could not find game. Please try creating a new one."
+            })
+            socket.disconnect()
+            return;  
         }
+
         const color = gameInstance?.wToken === token ? 'white' : 'black';
         
     
@@ -327,5 +347,16 @@ export const initAndReturnSocket = (server) => {
         })
     
         handleSocketConnection(socket, token)
+
+        if(!gameInstance.gameIsStarted){
+            logAndEmit({
+                gameInstanceId: gameInstance.id, 
+                type:"server-info",
+                player: color,
+                socketId: socketId,
+                // content: "Use " + JOIN_URL(gameInstance.id) + " to join the game."
+                content: "Use id : " + gameInstance.id + " to join the game."
+            })
+        }
     });
 }

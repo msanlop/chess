@@ -162,11 +162,11 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
+      {/* <header className="App-header">
         <h2> Chess</h2>
         <p>waltuh</p>
         <input onChange={v => setToken(v.target.value)}></input>
-      </header>
+      </header> */}
       <div className='App-body'>
           <Board 
             onClickSelect={selectTile}
