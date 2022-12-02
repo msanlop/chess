@@ -1,5 +1,6 @@
-#root {
-  height: 100vh;
+#root, html, body {
+  height: 100%;
+  background-color: #282c34;
 }
 
 .App {
@@ -34,13 +35,13 @@ h2 {
 .App-body {
   background-color: #282c34;
   /* overflow-y: hidden; */
-  /* height: 100%; */
+  height: 100%;
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
   justify-content: center;
-  /* align-items: center;
-  justify-content: center; */
+  align-items: center;
+  justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
 }
@@ -57,9 +58,10 @@ h2 {
   /* grid-auto-flow: row; */
   /* justify-items: center; */
 
-
-  display: inline-grid;
-  grid-template-rows: 1fr 9fr;
+  display: flex;
+  flex-direction: column;
+  /* display: inline-grid; */
+  /* grid-template-rows: 1fr 9fr; */
   /* grid-template-columns: 100px 100px 100px; */
   /* grid-gap: 3px; */
   /* justify-items: center; */

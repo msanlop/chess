@@ -32,14 +32,14 @@ export const ChatBox = (props:ChatProps) =>  {
     }
 
     useEffect(() => {
-        if(!socket.active && !socket.connected){
-            setMessages([...messagesRef.current, ['info', "Could not reach the server. Try reloading the page or creating a new game."]])
-        }
-        else if(socket.active && !socket.connected){
+        // if(!socket.active && !socket.connected){
+        //     setMessages([...messagesRef.current, ['info', "Could not reach the server. Try reloading the page or creating a new game."]])
+        // }
+        if(socket.active && !socket.connected){
             setMessages([...messagesRef.current, ['info', "Trying to connect to the server..."]])
         }
         
-    }, [socket.active, socket.connected])
+    }, [socket, props.connected])
     
     useEffect(() => scrollToBottom(), [messages])
     
@@ -52,7 +52,12 @@ export const ChatBox = (props:ChatProps) =>  {
     return(
         <div>
             <div className="chat-feed">
-                {messages.map((msg, index) => <p key={index} id={msg[0]}>{msg[1]}</p>)}
+                {messages.map((msg, index) => 
+                    <p key={index} 
+                        id={msg[0]} 
+                        className={msg[1].startsWith("black") ? "chat-black" : "chat-white"}>
+                            {msg[1]}
+                    </p>)}
                 <div style={{ float:"left", clear: "both" }}
                     ref={(el) => {endOfFeed = el}}>
                 </div>

@@ -25,7 +25,14 @@
 
 #chat {
     font-size: calc(10px + 1.2vmin);
+}
+
+.chat-white {
     color: white;
+}
+
+.chat-black {
+    color: #bebebe;
 }
 
 .chat-form {

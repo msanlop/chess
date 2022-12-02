@@ -100,7 +100,7 @@ const correctPawnDirections = (directions:number[][], color:string) : number[][]
 
 export const coordinateToAlgebraic = (coord : Coordinate) => {
     if(isOutOfBounds(coord)) {return 'invalid move'}
-    return ALGEBRAIC_X_AXIS[coord.x].concat(ALGEBRAIC_Y_AXIS[coord.y])
+    return ALGEBRAIC_X_AXIS[coord.x].concat(ALGEBRAIC_Y_AXIS[BOARD_SIZE - 1 - coord.y])
 }
     
 

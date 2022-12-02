@@ -87,6 +87,7 @@ function Board(props:BoardProps) {
 
     const drawBoard = isBlack ? invertArray(props.gameState.board) : props.gameState.board;
     const drawHighlighted = isBlack ? invertArray(props.highlighted) : props.highlighted;
+    const drawAxis = isBlack ? invertArray(ALGEBRAIC_X_AXIS) : ALGEBRAIC_X_AXIS;
     
     // const drawBoard = [null];
     
@@ -134,8 +135,8 @@ function Board(props:BoardProps) {
                 )}
 
                 {/* draw indices at the bottom of the board, '' for padding */}
-                <BoardCoordinate char={''} /> 
-                {ALGEBRAIC_X_AXIS.map(char => 
+                <BoardCoordinate char={''} />
+                {drawAxis.map(char => 
                     <li key={char}>
                         <BoardCoordinate char={char} />
                     </li>

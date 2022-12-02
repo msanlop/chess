@@ -49,12 +49,7 @@ export const initAndReturnSocket = (server) => {
     playerGameInstances.set(TEST_B_TOKEN, testGameInstance.id)
 
 
-    const io = new Server(server, {
-        cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
-        }
-    });
+    const io = new Server(server);
     
     
     const ID_LOG_LENGTH = 5
