@@ -285,7 +285,6 @@ export const initAndReturnSocket = (server) => {
         
     
         socket.on('disconnect', () => {
-        console.log(gameInstance?.wToken, " is the white token rn")
         logAndEmit({gameInstanceId : gameInstance.id, type:"disconnect", player:color, socketId:socketId});
         if(gameInstance.bId === socketId){
             gameInstance.bId = undefined
