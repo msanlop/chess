@@ -46,6 +46,7 @@ const generateRandomGameId = () => {
 const validUserId = (req, res, next) => {
     const gameInstance = playerGameInstances.get(req.query.token)
     if(!gameInstance){
+        serverLog(req.query.token, " tried play but had invalid token")
         res.write('You are not in any ongoing game.')
         res.end()
     } else {
@@ -66,6 +67,7 @@ app.get('/play', validUserId, (req, res) => {
 app.post('/create-game', (req, res) => {
     const token = generateRandomPlayerId()
     const gameId = generateRandomPlayerId()
+    serverLog(token, ": created new game")
     //TODO: allow for starting black also
     gameInstances.set(gameId, {...defaultGameInstance(), id:gameId, wToken:token, wId:token})
     playerGameInstances.set(token, gameId)
@@ -94,6 +96,7 @@ app.get('/join-game', (req, res) => {
     }
 
 
+    serverLog(token, ": join game ", gameId)
     res.json({token: token})
 })
 
