@@ -287,7 +287,7 @@ export const initSocket = (server) => {
       //TODO: send whole history, maybe sequence of moves and reconstruct on client
       //or compact serialized gamestate like before
       const timerUpdatedState = getLastGameState(gameInstance);
-      io.to(gameInstance.id).emit("gameInit", {
+      io.to(socket.id).emit("gameInit", {
         ...timerUpdatedState,
         ...getUpdateTimers(timerUpdatedState),
         lastUpdate: performance.now(),
