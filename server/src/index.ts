@@ -14,14 +14,20 @@ import {
   move,
   startingGameState,
 } from "./Chess/Chess";
-import { defaultGameInstance, GameInstance, initSocket } from "./sockets";
+import {
+  defaultGameInstance,
+  GameInstance,
+  initSocket,
+  terminateGameInstance,
+  getLastGameState,
+} from "./sockets";
 import path from "path";
 import crypto from "crypto";
 import bodyParser from "body-parser";
 import { router } from "websocket";
 
 const PORT = 8080;
-const GAME_RESTART_TIME = 10000;
+const GAMEINSTANCE_CLEAN_INTERVAL = 18000000; //5h
 
 const app = express();
 const server = http.createServer(app);
@@ -29,9 +35,25 @@ const server = http.createServer(app);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 
+//tokenId -> gameId
 export const playerGameInstances: Map<string, string> = new Map(); //TODO: allow for many game instances
+//gameId -> gameInstance
 export const gameInstances: Map<string, GameInstance> = new Map();
-const socket = initSocket(server);
+const socketServer = initSocket(server);
+
+setInterval(() => {
+  const instances = gameInstances;
+  //no way to filter on map values??
+  for (const entry of gameInstances) {
+    const gameId = entry[0];
+    const instance = entry[1];
+    if (performance.now() - instance.lastUpdate > GAMEINSTANCE_CLEAN_INTERVAL) {
+      terminateGameInstance(instance, socketServer);
+      //this is safe, apparently
+      gameInstances.delete(gameId);
+    }
+  }
+}, GAMEINSTANCE_CLEAN_INTERVAL);
 
 const generateRandomPlayerId = () => {
   const TOKEN_LENGTH = 15;
@@ -83,6 +105,7 @@ app.post("/create-game", (req, res) => {
     id: gameId,
     wToken: token,
     wId: token,
+    lastUpdate: performance.now(),
   });
   playerGameInstances.set(token, gameId);
   res.json({ token: token, gameId: gameId });
@@ -96,8 +119,9 @@ app.get("/join-game", (req, res) => {
     return;
   }
 
-  const token = generateRandomPlayerId();
   const instance = gameInstances.get(gameId)!;
+  //CHECK TOKEN TO SEE IF ITS RECONNECT (SEND TOKEN TOO)
+  const token = generateRandomPlayerId();
   playerGameInstances.set(token, gameId);
 
   if (!instance.wToken) {
@@ -116,5 +140,5 @@ app.get("/join-game", (req, res) => {
 app.use(express.static(path.join(process.cwd(), "out", "public"))); //TODO: redo path if change for production
 
 server.listen(PORT, () => {
-  console.log("listening on *:" + PORT);
+  console.log("listening on localhost:" + PORT);
 });

@@ -28,6 +28,7 @@ export interface GameInstance {
   gameStates: GameState[];
   gameIsStarted: boolean;
   timerTimeoutId?: NodeJS.Timeout;
+  lastUpdate: number;
 }
 
 export const defaultGameInstance = (): GameInstance => {
@@ -40,14 +41,15 @@ export const defaultGameInstance = (): GameInstance => {
       gameStates: [startingGameState], //TODO: make deep copy just incase
       gameIsStarted: false,
       id: "0",
+      lastUpdate: -1,
     })
   );
 };
 
-export const initSocket = (server) => {
-  const getLastGameState = (gameInstance: GameInstance) =>
-    gameInstance.gameStates[gameInstance.gameStates.length - 1];
+export const getLastGameState = (gameInstance: GameInstance) =>
+  gameInstance.gameStates[gameInstance.gameStates.length - 1];
 
+export const initSocket = (server) => {
   const TEST_W_TOKEN = "tokenw";
   const TEST_B_TOKEN = "tokenb";
   let testGameInstance: GameInstance = {
@@ -59,7 +61,12 @@ export const initSocket = (server) => {
   playerGameInstances.set(TEST_W_TOKEN, testGameInstance.id);
   playerGameInstances.set(TEST_B_TOKEN, testGameInstance.id);
 
-  const io = new Server(server);
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
+  });
 
   const ID_LOG_LENGTH = 5;
   const padId = (id: string) => {
@@ -161,7 +168,7 @@ export const initSocket = (server) => {
     return gameInstance;
   };
 
-  const terminateGameInstance = (id: string) => {
+  const restartGameInstance = (id: string) => {
     const instance = gameInstances.get(id);
     if (!instance) {
       //TODO: or delete instance instead of restart?
@@ -171,6 +178,15 @@ export const initSocket = (server) => {
       );
       return;
     }
+
+    //do not restart if game if no update for a a while
+    const AFK_THRESHOLD = 60000; // 1 min
+    if (performance.now() - instance.lastUpdate > AFK_THRESHOLD) {
+      gameInstances.delete(instance.id);
+      terminateGameInstance(instance, io);
+      return;
+    }
+
     let endMessage = "Game over : ";
     const endState = getLastGameState(instance);
     if (endState.stalemate) {
@@ -202,6 +218,7 @@ export const initSocket = (server) => {
         ...defaultGameInstance(),
         wToken: instance.wToken,
         id: instance.id,
+        lastUpdate: performance.now(),
       };
       gameInstances.set(instance.id, restatedInstance);
     }, GAME_RESTART_TIME);
@@ -256,6 +273,7 @@ export const initSocket = (server) => {
         socketId: "",
       });
       gameInstance.gameIsStarted = true;
+      gameInstance.lastUpdate = performance.now();
       const state = getLastGameState(gameInstance);
       state.wLastMoveTime = performance.now();
       io.to(gameInstance.id).emit("gameInit", state);
@@ -272,6 +290,7 @@ export const initSocket = (server) => {
       io.to(gameInstance.id).emit("gameInit", {
         ...timerUpdatedState,
         ...getUpdateTimers(timerUpdatedState),
+        lastUpdate: performance.now(),
       });
     }
   };
@@ -301,8 +320,8 @@ export const initSocket = (server) => {
     //TODO: authenticate requests
     const socketId = socket.id;
     const token: string = socket.handshake.query.token as string;
-
     const gameInstance = getGameInstanceOfPlayer(token);
+
     if (!gameInstance) {
       logAndEmit({
         gameInstanceId: "NONE",
@@ -315,6 +334,7 @@ export const initSocket = (server) => {
       return;
     }
 
+    handleSocketConnection(socket, token);
     const color = gameInstance?.wToken === token ? "white" : "black";
 
     socket.on("disconnect", () => {
@@ -330,10 +350,12 @@ export const initSocket = (server) => {
       if (gameInstance.wId === socketId) {
         gameInstance.wId = undefined;
       }
+      gameInstance.lastUpdate = performance.now();
     });
 
     socket.on("chatMessage", (input: string) => {
       const escapedString = input;
+      gameInstance.lastUpdate = performance.now();
       logAndEmit({
         gameInstanceId: gameInstance.id,
         type: "chat",
@@ -373,21 +395,20 @@ export const initSocket = (server) => {
       });
       const newState = move(from, to, getLastGameState(gameInstance));
       gameInstance.gameStates.push(newState);
+      gameInstance.lastUpdate = performance.now();
       if (newState.finished) {
         io.to(gameInstance.id.toString()).emit("newState", newState);
-        terminateGameInstance(gameInstance.id);
+        restartGameInstance(gameInstance.id);
       } else {
         clearTimeout(gameInstance.timerTimeoutId);
         const newTimeroutId = setTimeout(() => {
-          terminateGameInstance(gameInstance.id);
+          restartGameInstance(gameInstance.id);
         }, newState[newState.turn + "TimeLeft"]);
         gameInstance.timerTimeoutId = newTimeroutId;
         io.to(gameInstance.id.toString()).emit("newState", newState);
       }
       callback({ status: "ok" });
     });
-
-    handleSocketConnection(socket, token);
 
     if (!gameInstance.gameIsStarted) {
       logAndEmit({
@@ -400,4 +421,21 @@ export const initSocket = (server) => {
       });
     }
   });
+
+  return io;
+};
+
+export const terminateGameInstance = (
+  gameInstance: GameInstance,
+  io: Server
+) => {
+  clearTimeout(gameInstance.timerTimeoutId);
+  if (gameInstance.bId) {
+    io.sockets.sockets.get(gameInstance.bId)!.disconnect();
+  }
+  if (gameInstance.wId) {
+    io.sockets.sockets.get(gameInstance.wId)!.disconnect();
+  }
+  playerGameInstances.delete(gameInstance.bToken ? gameInstance.bToken : "");
+  playerGameInstances.delete(gameInstance.wToken ? gameInstance.wToken : "");
 };

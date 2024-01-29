@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 export const RECONNECTION_ATTEMPTS = 3;
 export const RECONNECTION_DELAY = 1000;
 
-const PLAYER_ID_TOKEN = localStorage.getItem('token')
+const PLAYER_ID_TOKEN = localStorage.getItem('token') ?? 'tokenw' //TODO: remove default
 const SERVER_URL = 'http://localhost:8080' 
 
 const socket = io(SERVER_URL, {
