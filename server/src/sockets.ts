@@ -329,7 +329,7 @@ export const initSocket = (server) => {
 
     if (!gameInstance) {
       logAndEmit({
-        gameInstanceId: "NONE",
+        gameInstanceId: socketId,
         type: "server-info",
         player: "",
         token: token,
@@ -443,4 +443,5 @@ export const terminateGameInstance = (
   }
   playerGameInstances.delete(gameInstance.bToken ? gameInstance.bToken : "");
   playerGameInstances.delete(gameInstance.wToken ? gameInstance.wToken : "");
+  gameInstances.delete(gameInstance.id);
 };

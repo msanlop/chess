@@ -96,7 +96,7 @@ const validGameId = (req, res, next) => {
   //TODO: add to game if the gameInstance has not started
   if (!gameInstances || !gameInstances.includes(gameId)) {
     serverLog(token, " tried to join invalid game");
-    res.write("You are not in this game");
+    res.status(401).send("You are not in this game");
     res.end();
   } else {
     next();
@@ -119,6 +119,12 @@ app.get("/get-current-games", (req, res) => {
       gameIds.push(...playerGameInstances.get(token)!);
     }
   }
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.json({ gameIds: gameIds });
 });
 
@@ -139,13 +145,18 @@ app.post("/create-game", (req, res) => {
   if (Math.round(Math.random())) wToken = token;
   else bToken = token;
 
-  gameInstances.set(gameId, {
+  const newGameinstance = {
     ...defaultGameInstance(),
     id: gameId,
     wToken: wToken,
     bToken: bToken,
     lastUpdate: performance.now(),
-  });
+  };
+  const UNSTARTED_GAME_CLEAR_TIME = 300000; // 5min
+  const unstartedGameClearTimeout = setTimeout(() => {
+    terminateGameInstance(newGameinstance, socketServer);
+  }, UNSTARTED_GAME_CLEAR_TIME);
+  gameInstances.set(gameId, newGameinstance);
   const currentPlayerGames = playerGameInstances.get(token) || [];
   playerGameInstances.set(token, [...currentPlayerGames, gameId]);
   res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
@@ -179,7 +190,9 @@ app.post("/join-game/:gameId", (req, res) => {
   res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
 });
 
-app.use(express.static(path.join(process.cwd(), "out", "public"))); //TODO: redo path if change for production
+app.use(
+  express.static(path.join(process.cwd(), "out", "public"), { maxAge: 3600000 })
+); //TODO: redo path if change for production
 
 server.listen(PORT, () => {
   console.log("listening on localhost:" + PORT);
