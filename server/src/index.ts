@@ -38,7 +38,7 @@ app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 
 //tokenId -> gameId
-export const playerGameInstances: Map<string, string> = new Map(); //TODO: allow for many game instances
+export const playerGameInstances: Map<string, Array<string>> = new Map(); //TODO: allow for many game instances
 //gameId -> gameInstance
 export const gameInstances: Map<string, GameInstance> = new Map();
 const socketServer = initSocket(server);
@@ -58,7 +58,7 @@ setInterval(() => {
 }, GAMEINSTANCE_CLEAN_INTERVAL);
 
 const generateRandomPlayerId = () => {
-  const TOKEN_LENGTH = 15;
+  const TOKEN_LENGTH = 4;
   let randString;
   do {
     randString = crypto.randomBytes(TOKEN_LENGTH).toString("hex");
@@ -67,7 +67,7 @@ const generateRandomPlayerId = () => {
 };
 
 const generateRandomGameId = () => {
-  const TOKEN_LENGTH = 6;
+  const TOKEN_LENGTH = 4;
   let randString;
   do {
     randString = crypto.randomBytes(TOKEN_LENGTH).toString("hex");
@@ -79,7 +79,7 @@ const validUserId = (req, res, next) => {
   const token = req.cookies.token;
   const gameInstance = playerGameInstances.get(token);
   // const gameInstance = playerGameInstances.get(req.cookies);
-  if (!gameInstance) {
+  if (!gameInstance || gameInstance.length == 0) {
     serverLog(token, " tried play but had invalid token");
     res.write("You are not in any ongoing game.");
     res.end();
@@ -90,11 +90,11 @@ const validUserId = (req, res, next) => {
 
 const validGameId = (req, res, next) => {
   const token = req.cookies.token;
-  const gameInstance = playerGameInstances.get(token);
+  const gameInstances = playerGameInstances.get(token);
   const gameId = req.params.gameId;
   // const gameInstance = playerGameInstances.get(req.cookies);
   //TODO: add to game if the gameInstance has not started
-  if (gameInstance != gameId) {
+  if (!gameInstances || !gameInstances.includes(gameId)) {
     serverLog(token, " tried to join invalid game");
     res.write("You are not in this game");
     res.end();
@@ -116,7 +116,7 @@ app.get("/get-current-games", (req, res) => {
 
   if (token) {
     if (playerGameInstances.has(token)) {
-      gameIds.push(playerGameInstances.get(token)!);
+      gameIds.push(...playerGameInstances.get(token)!);
     }
   }
   res.json({ gameIds: gameIds });
@@ -131,7 +131,7 @@ app.post("/create-game", (req, res) => {
   const token = req.cookies.token
     ? req.cookies.token
     : generateRandomPlayerId();
-  const gameId = generateRandomPlayerId();
+  const gameId = generateRandomGameId();
   serverLog(token, ": created new game");
 
   let bToken;
@@ -146,7 +146,8 @@ app.post("/create-game", (req, res) => {
     bToken: bToken,
     lastUpdate: performance.now(),
   });
-  playerGameInstances.set(token, gameId);
+  const currentPlayerGames = playerGameInstances.get(token) || [];
+  playerGameInstances.set(token, [...currentPlayerGames, gameId]);
   res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
   // .json({ token: token, gameId: gameId });
 });
@@ -171,7 +172,8 @@ app.post("/join-game/:gameId", (req, res) => {
     res.write("Game is already full, try starting a new one.");
     res.end();
   }
-  playerGameInstances.set(token, gameId);
+  const currentPlayerGames = playerGameInstances.get(token) || [];
+  playerGameInstances.set(token, [...currentPlayerGames, gameId]);
 
   serverLog(token, ": join game ", gameId);
   res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);

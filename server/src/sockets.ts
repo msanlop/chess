@@ -50,16 +50,17 @@ export const getLastGameState = (gameInstance: GameInstance) =>
   gameInstance.gameStates[gameInstance.gameStates.length - 1];
 
 export const initSocket = (server) => {
-  const TEST_W_TOKEN = "tokenw";
-  const TEST_B_TOKEN = "tokenb";
-  let testGameInstance: GameInstance = {
-    ...defaultGameInstance(),
-    id: "123",
-    wToken: TEST_W_TOKEN,
-  };
-  gameInstances.set(testGameInstance.id, testGameInstance);
-  playerGameInstances.set(TEST_W_TOKEN, testGameInstance.id);
-  playerGameInstances.set(TEST_B_TOKEN, testGameInstance.id);
+  // const TEST_W_TOKEN = "tokenw";
+  // const TEST_B_TOKEN = "tokenb";
+  // let testGameInstance: GameInstance = {
+  //   ...defaultGameInstance(),
+  //   id: "123",
+  //   wToken: TEST_W_TOKEN,
+  // };
+  // gameInstances.set(testGameInstance.id, testGameInstance);
+  // playerGameInstances.set(TEST_W_TOKEN, testGameInstance.id); change this if using
+
+  // playerGameInstances.set(TEST_B_TOKEN, testGameInstance.id);
 
   const io = new Server(server, {
     cors: {
@@ -148,25 +149,26 @@ export const initSocket = (server) => {
   const BASE_URL = "localhost:8080";
   const JOIN_URL = (id) => BASE_URL + "/join-game?gameId=" + id;
 
-  const getGameInstanceOfPlayer = (token: string): GameInstance | undefined => {
-    const instaceId = playerGameInstances.get(token);
-    if (!instaceId) {
-      socketServerLog(
-        "XX",
-        "ERROR : PLAYER " + token + " NOT ASSIGNED TO A GAME"
-      );
-      return;
-    }
-    const gameInstance = gameInstances.get(instaceId);
-    if (!gameInstance) {
-      socketServerLog(
-        instaceId,
-        "ERROR : GAMEINSTANCE " + instaceId + " NOT DEFINED"
-      );
-      return;
-    }
-    return gameInstance;
-  };
+  // const getGameInstanceOfPlayer = (token: string): GameInstance | undefined => {
+  //   const instaceId = playerGameInstances.get(token);
+  //   if (!instaceId) {
+  //     socketServerLog(
+  //       "XX",
+  //       "ERROR : PLAYER " + token + " NOT ASSIGNED TO A GAME"
+  //     );
+  //     return;
+  //   }
+  //   // const gameInstance = gameInstances.get(instaceId);
+  //   const gameInstance = ;
+  //   if (!gameInstance) {
+  //     socketServerLog(
+  //       instaceId,
+  //       "ERROR : GAMEINSTANCE " + instaceId + " NOT DEFINED"
+  //     );
+  //     return;
+  //   }
+  //   return gameInstance;
+  // };
 
   const restartGameInstance = (id: string) => {
     const instance = gameInstances.get(id);
@@ -236,8 +238,8 @@ export const initSocket = (server) => {
    *
    *
    */
-  const handleSocketConnection = (socket, token) => {
-    const gameInstance = getGameInstanceOfPlayer(token);
+  const handleSocketConnection = (socket, token, gameId) => {
+    const gameInstance = gameInstances.get(gameId);
     if (!gameInstance) {
       return;
     }
@@ -320,7 +322,10 @@ export const initSocket = (server) => {
     //TODO: authenticate requests
     const socketId = socket.id;
     const token: string = socket.handshake.query.token as string;
-    const gameInstance = getGameInstanceOfPlayer(token);
+    const gameId = socket.handshake.query.gameId as string;
+    const gameInstance = gameInstances.get(gameId);
+
+    // const gameInstance = getGameInstanceOfPlayer(token);
 
     if (!gameInstance) {
       logAndEmit({
@@ -334,7 +339,7 @@ export const initSocket = (server) => {
       return;
     }
 
-    handleSocketConnection(socket, token);
+    handleSocketConnection(socket, token, gameId);
     const color = gameInstance?.wToken === token ? "white" : "black";
 
     socket.on("disconnect", () => {

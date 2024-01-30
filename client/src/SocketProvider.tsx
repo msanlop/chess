@@ -7,11 +7,14 @@ export const RECONNECTION_DELAY = 1000;
 const PLAYER_ID_TOKEN = document.cookie.substring("token=".length) ?? 'tokenw' //TODO: remove default
 // const PLAYER_ID_TOKEN = localStorage.getItem('token') ?? 'tokenw' //TODO: remove default
 const SERVER_URL = 'http://localhost:8080' 
+const pathnameArr = window.location.pathname.split("/")
+const GAME_ID = pathnameArr[pathnameArr.length - 1]
 
 const socket = io(SERVER_URL, {
     autoConnect: false,
     query: {
     token : PLAYER_ID_TOKEN,
+    gameId : GAME_ID,
     },
     reconnectionAttempts : RECONNECTION_ATTEMPTS,
     reconnectionDelay : RECONNECTION_DELAY
