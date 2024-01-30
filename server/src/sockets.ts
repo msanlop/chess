@@ -86,7 +86,7 @@ export const initSocket = (server) => {
     type: string;
     content?: string;
     player: string;
-    socketId: string;
+    token: string;
   }
 
   const logAndEmit = (event: GameEvent) => {
@@ -103,7 +103,7 @@ export const initSocket = (server) => {
         clientString += event.player + " has reconnected";
         break;
       case "connect":
-        serverString += `${event.socketId} connected as ${event.player}`;
+        serverString += `${event.token} connected as ${event.player}`;
         clientString += `${event.player} has connected`;
         break;
       case "gameStart":
@@ -111,11 +111,11 @@ export const initSocket = (server) => {
         clientString += "Both players connected, starting game.";
         break;
       case "disconnect":
-        serverString += `${event.socketId} disconnected (${event.player})`;
+        serverString += `${event.token} disconnected (${event.player})`;
         clientString += `${event.player} has disconnected`;
         break;
       case "move":
-        serverString += `${event.socketId} ${event.content}`;
+        serverString += `${event.token} ${event.content}`;
         clientString += event.content;
         break;
       case "end":
@@ -199,7 +199,7 @@ export const initSocket = (server) => {
       gameInstanceId: id,
       type: "end",
       player: "",
-      socketId: "",
+      token: "",
       content: endMessage,
     });
     io.to(id).emit("gameOver");
@@ -209,7 +209,7 @@ export const initSocket = (server) => {
         gameInstanceId: id,
         type: "restart",
         player: "",
-        socketId: "",
+        token: "",
       });
       instance.gameIsStarted = false; //avoid quick reconnect issues but keeps ids
       disconnectOldSocketIfExisting(instance.wId);
@@ -262,7 +262,7 @@ export const initSocket = (server) => {
       gameInstanceId: gameInstance.id,
       type: "connect",
       player: color,
-      socketId: socket.id,
+      token: token,
     });
 
     if (!gameInstance.gameIsStarted && gameInstance.bId && gameInstance.wId) {
@@ -270,7 +270,7 @@ export const initSocket = (server) => {
         gameInstanceId: gameInstance.id,
         type: "gameStart",
         player: "",
-        socketId: "",
+        token: "",
       });
       gameInstance.gameIsStarted = true;
       gameInstance.lastUpdate = performance.now();
@@ -282,7 +282,7 @@ export const initSocket = (server) => {
         gameInstanceId: gameInstance.id,
         type: "reconnect",
         player: color,
-        socketId: socket.id,
+        token: token,
       });
       //TODO: send whole history, maybe sequence of moves and reconstruct on client
       //or compact serialized gamestate like before
@@ -327,7 +327,7 @@ export const initSocket = (server) => {
         gameInstanceId: "NONE",
         type: "server-info",
         player: "",
-        socketId: socketId,
+        token: token,
         content: "Could not find game. Please try creating a new one.",
       });
       socket.disconnect();
@@ -342,7 +342,7 @@ export const initSocket = (server) => {
         gameInstanceId: gameInstance.id,
         type: "disconnect",
         player: color,
-        socketId: socketId,
+        token: token,
       });
       if (gameInstance.bId === socketId) {
         gameInstance.bId = undefined;
@@ -360,7 +360,7 @@ export const initSocket = (server) => {
         gameInstanceId: gameInstance.id,
         type: "chat",
         player: color,
-        socketId: socketId,
+        token: socketId,
         content: color + ": " + escapedString,
       });
     });
@@ -385,7 +385,7 @@ export const initSocket = (server) => {
         gameInstanceId: gameInstance.id,
         type: "move",
         player: color,
-        socketId: socketId,
+        token: socketId,
         content:
           color +
           " moved from " +
@@ -415,7 +415,7 @@ export const initSocket = (server) => {
         gameInstanceId: gameInstance.id,
         type: "server-info",
         player: color,
-        socketId: socketId,
+        token: socketId,
         // content: "Use " + JOIN_URL(gameInstance.id) + " to join the game."
         content: "Use id : " + gameInstance.id + " to join the game.",
       });

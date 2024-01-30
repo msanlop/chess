@@ -101,7 +101,7 @@ export interface GameState {
   // times ?: number; //timers??
 }
 
-const genericGameState = {
+const genericGameState: GameState = {
   board: [],
   turn: "X",
   check: false,
@@ -115,7 +115,7 @@ const genericGameState = {
   bCanCastle: [true, true],
 };
 
-export const startingGameState = {
+export const startingGameState: GameState = {
   board: starterPosition,
   turn: "w",
   check: false,

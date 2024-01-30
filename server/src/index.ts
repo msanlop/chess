@@ -25,6 +25,7 @@ import path from "path";
 import crypto from "crypto";
 import bodyParser from "body-parser";
 import { router } from "websocket";
+import cookieParser from "cookie-parser";
 
 const PORT = 8080;
 const GAMEINSTANCE_CLEAN_INTERVAL = 18000000; //5h
@@ -34,6 +35,7 @@ const server = http.createServer(app);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
+app.use(cookieParser());
 
 //tokenId -> gameId
 export const playerGameInstances: Map<string, string> = new Map(); //TODO: allow for many game instances
@@ -74,10 +76,27 @@ const generateRandomGameId = () => {
 };
 
 const validUserId = (req, res, next) => {
-  const gameInstance = playerGameInstances.get(req.query.token);
+  const token = req.cookies.token;
+  const gameInstance = playerGameInstances.get(token);
+  // const gameInstance = playerGameInstances.get(req.cookies);
   if (!gameInstance) {
-    serverLog(req.query.token, " tried play but had invalid token");
+    serverLog(token, " tried play but had invalid token");
     res.write("You are not in any ongoing game.");
+    res.end();
+  } else {
+    next();
+  }
+};
+
+const validGameId = (req, res, next) => {
+  const token = req.cookies.token;
+  const gameInstance = playerGameInstances.get(token);
+  const gameId = req.params.gameId;
+  // const gameInstance = playerGameInstances.get(req.cookies);
+  //TODO: add to game if the gameInstance has not started
+  if (gameInstance != gameId) {
+    serverLog(token, " tried to join invalid game");
+    res.write("You are not in this game");
     res.end();
   } else {
     next();
@@ -91,28 +110,49 @@ app.get("/", (req, res) => {
   res.sendFile("index.html", { root: "./out/public" });
 });
 
-app.get("/play", validUserId, (req, res) => {
+app.get("/get-current-games", (req, res) => {
+  const token = req.cookies.token;
+  const gameIds: Array<string> = [];
+
+  if (token) {
+    if (playerGameInstances.has(token)) {
+      gameIds.push(playerGameInstances.get(token)!);
+    }
+  }
+  res.json({ gameIds: gameIds });
+});
+
+app.get("/play/:gameId", validUserId, validGameId, (req, res) => {
   res.sendFile("game.html", { root: "./out/public" });
 });
 
+//TODO: prevent spam
 app.post("/create-game", (req, res) => {
-  const token = generateRandomPlayerId();
+  const token = req.cookies.token
+    ? req.cookies.token
+    : generateRandomPlayerId();
   const gameId = generateRandomPlayerId();
   serverLog(token, ": created new game");
-  //TODO: allow for starting black also
+
+  let bToken;
+  let wToken;
+  if (Math.round(Math.random())) wToken = token;
+  else bToken = token;
+
   gameInstances.set(gameId, {
     ...defaultGameInstance(),
     id: gameId,
-    wToken: token,
-    wId: token,
+    wToken: wToken,
+    bToken: bToken,
     lastUpdate: performance.now(),
   });
   playerGameInstances.set(token, gameId);
-  res.json({ token: token, gameId: gameId });
+  res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
+  // .json({ token: token, gameId: gameId });
 });
 
-app.get("/join-game", (req, res) => {
-  const gameId = req.query.gameId as string;
+app.post("/join-game/:gameId", (req, res) => {
+  const gameId = req.params.gameId as string;
   if (!gameId || !gameInstances.has(gameId)) {
     res.send("Invalid game id.");
     res.end();
@@ -120,21 +160,21 @@ app.get("/join-game", (req, res) => {
   }
 
   const instance = gameInstances.get(gameId)!;
-  //CHECK TOKEN TO SEE IF ITS RECONNECT (SEND TOKEN TOO)
-  const token = generateRandomPlayerId();
-  playerGameInstances.set(token, gameId);
+  const token = req.cookies.token || generateRandomPlayerId();
 
-  if (!instance.wToken) {
+  //TODO: reformat to something not dumb
+  if (!instance.wToken || instance.wToken === token) {
     instance.wToken = token;
-  } else if (!instance.bToken) {
+  } else if (!instance.bToken || instance.bToken === token) {
     instance.bToken = token;
   } else {
     res.write("Game is already full, try starting a new one.");
     res.end();
   }
+  playerGameInstances.set(token, gameId);
 
   serverLog(token, ": join game ", gameId);
-  res.json({ token: token });
+  res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
 });
 
 app.use(express.static(path.join(process.cwd(), "out", "public"))); //TODO: redo path if change for production

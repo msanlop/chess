@@ -107,6 +107,7 @@ function App() {
     //go back to present if click on old state
     if(gameStateHistoryIndex !== gameStates.length - 1){
       setGameStateHistoryIndex(gameStates.length - 1)
+      return
     }
     //unselect if cursor outside board
     if(!coords){
@@ -124,6 +125,7 @@ function App() {
     }
     else{
       if(socket){
+        //TODO: move piece before server anwser
         socket.emit("move", selectedPieceCoords, coords, (response:any) => {
           setAllowedMoves(new Array(BOARD_SIZE).fill(false))
         })
