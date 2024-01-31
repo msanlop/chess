@@ -422,7 +422,7 @@ export const initSocket = (server) => {
         player: color,
         token: socketId,
         // content: "Use " + JOIN_URL(gameInstance.id) + " to join the game."
-        content: "Use id : " + gameInstance.id + " to join the game.",
+        content: `To join the game use id : ${gameInstance.id} or share the page's url.`,
       });
     }
   });

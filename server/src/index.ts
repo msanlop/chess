@@ -75,29 +75,45 @@ const generateRandomGameId = () => {
   return randString;
 };
 
-const validUserId = (req, res, next) => {
-  const token = req.cookies.token;
-  const gameInstance = playerGameInstances.get(token);
-  // const gameInstance = playerGameInstances.get(req.cookies);
-  if (!gameInstance || gameInstance.length == 0) {
-    serverLog(token, " tried play but had invalid token");
-    res.write("You are not in any ongoing game.");
-    res.end();
-  } else {
-    next();
-  }
-};
+// const validUserId = (req, res, next) => {
+//   const token = req.cookies.token;
+//   const gameInstance = playerGameInstances.get(token);
+//   if (!token) {
+//     const newToken = generateRandomPlayerId();
+//     res.cookie("token", token, { maxAge: 43200000 });
+//   } else {
+//     next();
+//   }
+// };
 
 const validGameId = (req, res, next) => {
-  const token = req.cookies.token;
-  const gameInstances = playerGameInstances.get(token);
+  let token = req.cookies.token;
+  if (!token) {
+    token = generateRandomPlayerId();
+    res.cookie("token", token, { maxAge: 43200000 });
+  }
+  const joinedGameInstances = playerGameInstances.get(token) || [];
   const gameId = req.params.gameId;
   // const gameInstance = playerGameInstances.get(req.cookies);
-  //TODO: add to game if the gameInstance has not started
-  if (!gameInstances || !gameInstances.includes(gameId)) {
-    serverLog(token, " tried to join invalid game");
-    res.status(401).send("You are not in this game");
-    res.end();
+  if (!joinedGameInstances.includes(gameId)) {
+    const instance = gameInstances.get(gameId);
+    if (!instance) {
+      res.status(400).write("Invalid game id.");
+      res.end();
+      return;
+    }
+    //TODO: remove this filthy copy paste
+    if (!instance.wToken || instance.wToken === token) {
+      instance.wToken = token;
+    } else if (!instance.bToken || instance.bToken === token) {
+      instance.bToken = token;
+    } else {
+      res.write("Game is already full, try starting a new one.");
+      res.end();
+      return;
+    }
+    playerGameInstances.set(token, [...joinedGameInstances, gameId]);
+    next();
   } else {
     next();
   }
@@ -128,7 +144,7 @@ app.get("/get-current-games", (req, res) => {
   res.json({ gameIds: gameIds });
 });
 
-app.get("/play/:gameId", validUserId, validGameId, (req, res) => {
+app.get("/play/:gameId", validGameId, (req, res) => {
   res.sendFile("game.html", { root: "./out/public" });
 });
 
