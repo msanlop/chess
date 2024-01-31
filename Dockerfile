@@ -4,7 +4,7 @@ RUN apk add g++ make py3-pip
 
 RUN mkdir -p /home/node/chess/client/node_modules
 #client build target
-RUN mkdir -p /home/node/chess/server/public/static
+RUN mkdir -p /home/node/chess/server/out/public/static
 RUN chown -R node:node /home/node/chess/
 
 #build client
