@@ -585,15 +585,13 @@ const getBoardWithMovedPiece = (
 export const getUpdateTimers = (state: GameState) => {
   let wNewTimeLeft = state.wTimeLeft;
   let bNewTimeLeft = state.bTimeLeft;
-  let bNewLastMoveTime = state.bLastMoveTime
-    ? state.bLastMoveTime
-    : performance.now();
+  let bNewLastMoveTime = state.bLastMoveTime ? state.bLastMoveTime : Date.now();
   let wNewLastMoveTime = state.wLastMoveTime;
   if (state.turn == "w") {
-    wNewLastMoveTime = performance.now();
+    wNewLastMoveTime = Date.now();
     wNewTimeLeft = wNewTimeLeft - (wNewLastMoveTime - bNewLastMoveTime!);
   } else {
-    bNewLastMoveTime = performance.now();
+    bNewLastMoveTime = Date.now();
     bNewTimeLeft = bNewTimeLeft - (bNewLastMoveTime - wNewLastMoveTime!);
   }
 

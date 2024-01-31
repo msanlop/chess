@@ -49,7 +49,7 @@ setInterval(() => {
   for (const entry of gameInstances) {
     const gameId = entry[0];
     const instance = entry[1];
-    if (performance.now() - instance.lastUpdate > GAMEINSTANCE_CLEAN_INTERVAL) {
+    if (Date.now() - instance.lastUpdate > GAMEINSTANCE_CLEAN_INTERVAL) {
       terminateGameInstance(instance, socketServer);
       //this is safe, apparently
       gameInstances.delete(gameId);
@@ -150,7 +150,7 @@ app.post("/create-game", (req, res) => {
     id: gameId,
     wToken: wToken,
     bToken: bToken,
-    lastUpdate: performance.now(),
+    lastUpdate: Date.now(),
   };
   const UNSTARTED_GAME_CLEAR_TIME = 300000; // 5min
   const unstartedGameClearTimeout = setTimeout(() => {

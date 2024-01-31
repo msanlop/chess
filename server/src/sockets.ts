@@ -183,7 +183,7 @@ export const initSocket = (server) => {
 
     //do not restart if game if no update for a a while
     const AFK_THRESHOLD = 60000; // 1 min
-    if (performance.now() - instance.lastUpdate > AFK_THRESHOLD) {
+    if (Date.now() - instance.lastUpdate > AFK_THRESHOLD) {
       gameInstances.delete(instance.id);
       terminateGameInstance(instance, io);
       return;
@@ -220,7 +220,7 @@ export const initSocket = (server) => {
         ...defaultGameInstance(),
         wToken: instance.wToken,
         id: instance.id,
-        lastUpdate: performance.now(),
+        lastUpdate: Date.now(),
       };
       gameInstances.set(instance.id, restatedInstance);
     }, GAME_RESTART_TIME);
@@ -275,9 +275,9 @@ export const initSocket = (server) => {
         token: "",
       });
       gameInstance.gameIsStarted = true;
-      gameInstance.lastUpdate = performance.now();
+      gameInstance.lastUpdate = Date.now();
       const state = getLastGameState(gameInstance);
-      state.wLastMoveTime = performance.now();
+      state.wLastMoveTime = Date.now();
       io.to(gameInstance.id).emit("gameInit", state);
     } else if (gameInstance.gameIsStarted) {
       logAndEmit({
@@ -292,7 +292,7 @@ export const initSocket = (server) => {
       io.to(socket.id).emit("gameInit", {
         ...timerUpdatedState,
         ...getUpdateTimers(timerUpdatedState),
-        lastUpdate: performance.now(),
+        lastUpdate: Date.now(),
       });
     }
   };
@@ -355,12 +355,12 @@ export const initSocket = (server) => {
       if (gameInstance.wId === socketId) {
         gameInstance.wId = undefined;
       }
-      gameInstance.lastUpdate = performance.now();
+      gameInstance.lastUpdate = Date.now();
     });
 
     socket.on("chatMessage", (input: string) => {
       const escapedString = input;
-      gameInstance.lastUpdate = performance.now();
+      gameInstance.lastUpdate = Date.now();
       logAndEmit({
         gameInstanceId: gameInstance.id,
         type: "chat",
@@ -400,7 +400,7 @@ export const initSocket = (server) => {
       });
       const newState = move(from, to, getLastGameState(gameInstance));
       gameInstance.gameStates.push(newState);
-      gameInstance.lastUpdate = performance.now();
+      gameInstance.lastUpdate = Date.now();
       if (newState.finished) {
         io.to(gameInstance.id.toString()).emit("newState", newState);
         restartGameInstance(gameInstance.id);
