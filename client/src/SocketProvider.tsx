@@ -6,16 +6,12 @@ export const RECONNECTION_DELAY = 1000;
 
 const PLAYER_ID_TOKEN = document.cookie.substring("token=".length) ?? 'tokenw' //TODO: remove default
 // const PLAYER_ID_TOKEN = localStorage.getItem('token') ?? 'tokenw' //TODO: remove default
-//TODO: use env or something
-const SCHEME = "http"
-const DOMAIN = "localhost"
-const PORT = "8080"
 
 const pathnameArr = window.location.pathname.split("/")
 const GAME_ID = pathnameArr[pathnameArr.length - 1]
 
-const server_url = `${SCHEME}://${DOMAIN}:${PORT}`
-const socket = io(server_url, {
+const serverUrl = window.location.origin
+const socket = io(serverUrl, {
     autoConnect: false,
     query: {
     token : PLAYER_ID_TOKEN,
