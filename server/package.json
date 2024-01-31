@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node out/index.js",
     "prestart": "npm run build",
-    "build": "tsc",
+    "build": "tsc && cp -r ./public/* ./out/public",
     "run": "npx ts-",
     "debug": "npx ts-node --inspect src/index.ts"
   },

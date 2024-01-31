@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess!!</title>
+
+    <style>
+        body {
+            background-color: #282c34;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+        }
+
+        #content-wrapper {
+            display: inline-block;
+            text-align: left;
+            padding: 20px;
+        }
+
+        h1,
+        h2 {
+            color: #ffffff;
+            padding: 10px
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            color: #ffffff;
+        }
+
+        input[type="text"],
+        input[type="submit"] {
+            padding: 8px;
+            margin: 5px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        input[type="submit"] {
+            background-color: #3178C6;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 5px;
+        }
+
+        p {
+            color: #ffffff;
+        }
+
+        #create-form,
+        #join-form,
+        #ongoingGamesList {
+            text-align: center;
+        }
+
+        a:link,
+        a:visited {
+            color: #C94E3E;
+        }
+
+        hr {
+            margin: 40px
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="content-wrapper">
+        <h1 style="text-align: center;">Chessssssss</h1>
+
+        <h2>Create a New Game</h2>
+        <form id="create-form" action="/create-game" method="post">
+            <input type="submit" value="Create Game">
+        </form>
+        <hr>
+        <h2>Join an Existing Game</h2>
+        <form id="join-form" action="/join-game" method="post">
+            <label for="gameId">Enter Game ID: </label>
+            <input type="text" id="gameId" required />
+            <input type="submit" value="Join Game">
+        </form>
+        <hr>
+        <h2>Ongoing Games</h2>
+        <ul id="ongoingGamesList"></ul>
+
+        <script>
+            const cookies = document.cookie
+            let token = ""
+            if (cookies) {
+                token = cookies.substring("token=".length)
+            }
+
+            // Function to make a GET request and display ongoing games
+            function getOngoingGames() {
+                if (!token) return;
+                fetch('/get-current-games')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data)
+
+                        const gamesList = document.getElementById('ongoingGamesList');
+                        gamesList.innerHTML = ''; // Clear previous list
+                        const gameIds = data["gameIds"]
+                        if (gameIds.length > 0) {
+                            gameIds.forEach(gameId => {
+                                const listItem = document.createElement('li');
+                                listItem.innerHTML = `Rejoin game: 
+                                <a href="play/${gameId}">${gameId}</a>`;
+                                gamesList.appendChild(listItem);
+                            });
+                        } else {
+                            const noGamesMessage = document.createElement('p');
+                            noGamesMessage.textContent = 'No ongoing games.';
+                            gamesList.appendChild(noGamesMessage);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching ongoing games:', error));
+            }
+
+            document.getElementById("join-form").addEventListener('submit', function (s) {
+                s.preventDefault();
+                const url = "/join-game/" + this.elements["gameId"].value
+                this.action = url
+                this.submit()
+            });
+
+            window.onload = e => getOngoingGames()
+        </script>
+    </div>
+</body>
+
+</html>
