@@ -1,12 +1,11 @@
-{
-  "name": "server",
+{ "name": "server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node out/index.js",
     "prestart": "npm run build",
-    "build": "tsc && cp -r ./public/* ./out/public",
+    "build": "tsc && mkdir -p ./out/public/static && cp -r ./public/* ./out/public",
     "run": "npx ts-",
     "debug": "npx ts-node --inspect src/index.ts"
   },
