@@ -206,7 +206,7 @@ app.post("/join-game/:gameId", (req, res) => {
   res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
 });
 
-app.use(express.static(path.resolve("./public"), { maxAge: 3600000 }));
+app.use(express.static(path.resolve("./out/public"), { maxAge: 3600000 }));
 
 server.listen(PORT, () => {
   console.log("listening on localhost:" + PORT);
