@@ -133,22 +133,23 @@ function App() {
     }
   }
 
+  // Change viewed board state from the move (state) history
   const changeViewedState = (command : string) => {
     switch (command) {
-      case 'f':
-        setGameStateHistoryIndex(Math.min(gameStates.length - 1, gameStateHistoryIndex+1))
+      case 'start':
+        setGameStateHistoryIndex(0)
         break;
-      case 'b':
+      case 'step-back':
         setGameStateHistoryIndex(Math.max(0, gameStateHistoryIndex-1))
         break;
-      case 'p':
+      case 'step':
+        setGameStateHistoryIndex(Math.min(gameStates.length - 1, gameStateHistoryIndex+1))
+        break;
+      case 'present':
         setGameStateHistoryIndex(gameStates.length - 1)
         break;
     }
   }
-
-
-
 
   const updateTimers = () => {
     const {w, b} = timers
@@ -160,6 +161,10 @@ function App() {
     setCounter(performance.now())
   }
   
+  
+
+
+
 
 
   return (
@@ -172,7 +177,7 @@ function App() {
       <div className='App-body'>
           <Board 
             onClickSelect={selectTile}
-            color={playerColor}
+            color={playerColor || 'w'}
             gameState={gameStates[gameStateHistoryIndex]}
             oldState={gameStateHistoryIndex !== gameStates.length-1}
             highlighted={allowed}

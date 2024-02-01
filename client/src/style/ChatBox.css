@@ -5,16 +5,47 @@
     /* height: 40vw; */
     width: 25vw;
     height: 60vh;
-    overflow-x: scroll;
     background-color: #16181d;
     overflow-y: scroll;
+    scrollbar-width: none; /* Firefox scrollbar */
+
+    white-space: nowrap;
+    overflow-x: hidden;
+    height: 500px;
+
 }
+
+.chat-feed::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
+
+@media screen and (max-width: 450px) {
+    .chat-feed {
+        height: 60vh;
+        width: 80vw;
+    }
+  }
+  
+  @media screen and (min-width: 451px) and (max-width: 750px) {
+    .chat-feed {
+      height: 60vh;
+      width: 70vw;
+    }
+  }
+  
+  @media screen and (min-width: 751px) {
+    .chat-feed {
+      height: 70vh;
+      width: 30vw;
+    }
+  }
 
 
 
 .chat-feed p {
     position: relative;
     text-align: left;
+    padding: 3%;
     width: 100%;
 }
 
@@ -38,4 +69,5 @@
 .chat-form {
     position: relative;
     width: 100%;
+    margin: 5%;
 }

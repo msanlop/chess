@@ -11,5 +11,47 @@
     -moz-user-drag: none;
     -o-user-drag: none;
     pointer-events: none;
-    width: min(8vw, 8vh);
+    z-index: 10;
 }
+
+@media screen and (max-width: 450px) {
+    .piece-icon {
+      width: min(11.5vw, 11.5vh);
+    }
+  }
+  
+  @media screen and (min-width: 451px) and (max-width: 750px) {
+    .piece-icon {
+      width: min(9vw, 9vh);
+    }
+  }
+  
+  @media screen and (min-width: 751px) {
+    .piece-icon {
+      width: min(8vw, 8vh);
+    }
+  }
+
+#boardLetterCoordinate, #boardNumberCoordinate {
+    position: absolute;
+    margin: 0;
+    font-size: 24px; /* Adjust the font size as needed */
+    /* height: 20%; */
+    /* width: 10%; */
+    user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+  
+  }
+  
+  #boardNumberCoordinate {
+    left: 0;
+    top: 0;
+  }
+  
+  #boardLetterCoordinate {
+    bottom: 0;
+    right: 0;
+  }

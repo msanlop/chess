@@ -1,11 +1,12 @@
 .history-arrows {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    padding: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 450px;
+    padding: 5px;
     /* margin-top: 100%;  */
     background-color: white;
     border-radius: 10px;
-    border: 10px solid #3178C6;
+    /* border: 3px solid #3178C6; */
     height: fit-content;
     /* position: relative; */
     /* top: 100%;  */

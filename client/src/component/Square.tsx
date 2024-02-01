@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from "react";
 import internal from "stream";
 import '../style/Square.css'
-import {Coordinate, Piece} from '../Chess/Chess'
+import {ALGEBRAIC_Y_AXIS, BOARD_SIZE, Coordinate, Piece} from '../Chess/Chess'
 import { isPropertySignature, reduceEachLeadingCommentRange } from "typescript";
 import {pieceIcons} from '../res/Pieces'
 
@@ -27,26 +27,55 @@ interface TileInformation {
     onMouseUp : (coords: Coordinate) => void;
     onMouseEnter : (coords: Coordinate) => void;
     dragHover : boolean;
+    drawAxis: number[];
+    tileIndex : number;
 }
 
 const Square : FC<TileInformation> = (props : TileInformation)  => {
     const [colorsStyle, setColorsStyle] = useState<any>({background: 'white', color: 'black'})
     const [position, setPosition] = useState<any>()
 
+    const isWhite = (x : number, y :number) => (x+y) % 2  === 0
+
+    const getTileCharacter = (coords:Coordinate) => {
+        const {x,y} = coords
+        const index = props.tileIndex
+        const isLeft = index % BOARD_SIZE === 0
+        const isBottom = BOARD_SIZE*BOARD_SIZE - index <= BOARD_SIZE
+        let letter = <></>
+        let number = <></>
+        if(!isLeft && !isBottom) return
+        if(isBottom) {
+            letter = <div id="boardLetterCoordinate" style={
+                {color:isWhite(x, y) ?
+                    BLACK_BACKGROUND_COLOR : WHITE_BACKGROUND_COLOR}}>
+            {props.drawAxis.at(x)}
+            </div>
+        }
+        if (isLeft) {
+            number = <div id="boardNumberCoordinate" style={
+                {color:isWhite(x, y) ?
+                    BLACK_BACKGROUND_COLOR : WHITE_BACKGROUND_COLOR}}>
+            {BOARD_SIZE - props.coords.y}
+            </div>
+        }
+        return [letter, number]
+        
+    }
+
     //update style to allow absolute positioning
     useEffect( () => {
         if(props.draggingCoords) {
             setPosition({
-                position:"absolute",
+                position:"fixed",
                 top:props.draggingCoords.y - HALF_ICON_SIZE,
                 left:props.draggingCoords.x - HALF_ICON_SIZE,
-
+                zIndex: 100,
             })            
         } else {
             setPosition({
                 position:"relative",
-                // top:"20%",
-                // left:"0%"
+                zIndex: 10,
             })
         }
     }, [props.draggingCoords])
@@ -65,7 +94,7 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
                 if(props.isInCheck){
                     bg = CHECK_BACKGROUND_COLOR
                 }
-                else if((x+y) % 2  === 0){
+                else if(isWhite(x,y)){
                     bg = WHITE_BACKGROUND_COLOR
                 } else {
                     bg = props.oldState ? BLACK_BACKGROUND_COLOR_OLD_STATE : BLACK_BACKGROUND_COLOR
@@ -98,8 +127,9 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
         >
             {props.piece === null ? <></> : 
                 <img src={pieceIcons.get(props.piece.color + props.piece.type)} className="piece-icon" 
-                    style={position}>
+                    style={{...position}}>
                 </img>}
+                {getTileCharacter(props.coords)}
         </div>
     )
 }

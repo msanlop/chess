@@ -62,6 +62,7 @@ function Board(props:BoardProps) {
             && p !== null
             && p?.color === props.color){
             setDragging(true)
+            
             const x = event.pageX
             const y = event.pageY
             setDraggedPieceIndex(coords.x + coords.y*BOARD_SIZE)
@@ -89,17 +90,28 @@ function Board(props:BoardProps) {
     const drawHighlighted = isBlack ? invertArray(props.highlighted) : props.highlighted;
     const drawAxis = isBlack ? invertArray(ALGEBRAIC_X_AXIS) : ALGEBRAIC_X_AXIS;
     
+    const topPadding = []
+    for (let index = 0; index < BOARD_SIZE + 1; index++) {
+        topPadding.push(<li key={''}><BoardCoordinate char={''}/></li>)
+    }
     // const drawBoard = [null];
     
+    
+    const timer = (isBlack : boolean) => isBlack ? 
+        <Timer timerValue={props.timers.b} color="b"/> : 
+        <Timer timerValue={props.timers.w} color="w"/>
+
     return (
         <div className="chess-board" 
             onMouseMove={followMouseCursor}
             onMouseLeave={exitBoard}
             >
-            <Timer timerValue={props.timers.b} color="b"/>
+                
+            {timer(!isBlack)}
 
+                
             <ul>
-                {/* This is a mess and not ready to allow for rendering from different side. Refactor if further changes needed */}
+                {/* {topPadding} */}
                 {props.gameState.board.map( (piece: (Piece | null), index: number) => {
                     const drawIndex = isBlack ? BOARD_SIZE*BOARD_SIZE - 1 - index : index
                     const [x,y] = [drawIndex%BOARD_SIZE, drawIndex/BOARD_SIZE >> 0]
@@ -107,8 +119,11 @@ function Board(props:BoardProps) {
                     return (
                         <>
 
+
                         {/* draw index to the left of the board */}
-                        {index % BOARD_SIZE === 0 ? <li key={'i'+ index}><BoardCoordinate char={ (BOARD_SIZE - y).toString()}/></li>: <></>}
+                        {/* {index % BOARD_SIZE === 0 ? 
+                            <li key={'i'+ index}><BoardCoordinate char={ (BOARD_SIZE - y).toString()}/></li>: 
+                            <></>} */}
 
                         <li key={index} onMouseMove={(e) => {}}>    
                             <Square 
@@ -121,9 +136,11 @@ function Board(props:BoardProps) {
                                     && drawBoard[index]
                                     && drawBoard[index].type === 'K' 
                                     && props.gameState.turn === drawBoard[index].color}
+                                drawAxis={drawAxis}
                                 onClick={props.onClickSelect}
                                 onMouseDown={onMouseDown}
                                 onMouseUp={up}
+                                tileIndex={index}
                                 onMouseEnter={enter}
                                 draggingCoords={drawIndex === draggedPieceIndex && dragging ? draggingCoords : undefined}
                                 dragHover={dragging && lastHoveredCoords!.x === x && lastHoveredCoords!.y === y} //TODO: only true for the hovered tile
@@ -135,15 +152,15 @@ function Board(props:BoardProps) {
                 )}
 
                 {/* draw indices at the bottom of the board, '' for padding */}
-                <BoardCoordinate char={''} />
+                {/* <BoardCoordinate char={''} />
                 {drawAxis.map(char => 
                     <li key={char}>
                         <BoardCoordinate char={char} />
                     </li>
-                )}
+                )} */}
             </ul>
             
-            <Timer timerValue={props.timers.w} color="w"/>
+            {timer(isBlack)}
 
         </div>
     )

@@ -64,9 +64,8 @@ export const ChatBox = (props:ChatProps) =>  {
             </div>
 
             <form onSubmit={sendMessage} className="chat-form">
-                {/* <input className='chat-input'
-                    type={"text"}></input> */}
-                <input onInput={(e : any) => setMessage(e.target.value)}></input>
+                <input onInput={(e : any) => setMessage(e.target.value)}
+                    style={{marginRight:"5px"}}></input>
                 <input type="submit" value="Send" />
             </form>
         </div>
