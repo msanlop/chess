@@ -31,4 +31,4 @@ FROM node:21-alpine
 WORKDIR /home/node/chess/server
 COPY --from=build /home/node/chess/server .
 EXPOSE 8080
-CMD [ "npm" , "start" ]
+CMD [ "node" , "out/index.js" ]

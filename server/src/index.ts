@@ -17,10 +17,9 @@ import {
 import {
   defaultGameInstance,
   GameInstance,
-  initSocket,
-  terminateGameInstance,
-  getLastGameState,
-} from "./sockets";
+  ChessGameServer,
+  OperationResult,
+} from "./ChessGameServer";
 import path from "path";
 import crypto from "crypto";
 import bodyParser from "body-parser";
@@ -28,7 +27,6 @@ import { router } from "websocket";
 import cookieParser from "cookie-parser";
 
 const PORT = 8080;
-const GAMEINSTANCE_CLEAN_INTERVAL = 18000000; //5h
 
 const app = express();
 const server = http.createServer(app);
@@ -37,85 +35,31 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 
-//tokenId -> gameId
-export const playerGameInstances: Map<string, Array<string>> = new Map(); //TODO: allow for many game instances
-//gameId -> gameInstance
-export const gameInstances: Map<string, GameInstance> = new Map();
-const socketServer = initSocket(server);
+const TOKEN_MAX_AGE = 21600000;
 
-setInterval(() => {
-  const instances = gameInstances;
-  //no way to filter on map values??
-  for (const entry of gameInstances) {
-    const gameId = entry[0];
-    const instance = entry[1];
-    if (Date.now() - instance.lastUpdate > GAMEINSTANCE_CLEAN_INTERVAL) {
-      terminateGameInstance(instance, socketServer);
-      //this is safe, apparently
-      gameInstances.delete(gameId);
-    }
-  }
-}, GAMEINSTANCE_CLEAN_INTERVAL);
+// const socketServer = initSocket(server);
+const chessServer = ChessGameServer.getChessServer(server);
 
-const generateRandomPlayerId = () => {
-  const TOKEN_LENGTH = 4;
-  let randString;
-  do {
-    randString = crypto.randomBytes(TOKEN_LENGTH).toString("hex");
-  } while (playerGameInstances.has(randString));
-  return randString;
-};
-
-const generateRandomGameId = () => {
-  const TOKEN_LENGTH = 4;
-  let randString;
-  do {
-    randString = crypto.randomBytes(TOKEN_LENGTH).toString("hex");
-  } while (gameInstances.has(randString));
-  return randString;
-};
-
-// const validUserId = (req, res, next) => {
-//   const token = req.cookies.token;
-//   const gameInstance = playerGameInstances.get(token);
-//   if (!token) {
-//     const newToken = generateRandomPlayerId();
-//     res.cookie("token", token, { maxAge: 43200000 });
-//   } else {
-//     next();
-//   }
-// };
-
-const validGameId = (req, res, next) => {
+const joinGame = (req, res, next) => {
   let token = req.cookies.token;
   if (!token) {
-    token = generateRandomPlayerId();
-    res.cookie("token", token, { maxAge: 43200000 });
+    token = chessServer.generateRandomPlayerId();
   }
-  const joinedGameInstances = playerGameInstances.get(token) || [];
+  res.cookie("token", token, { maxAge: TOKEN_MAX_AGE });
   const gameId = req.params.gameId;
-  // const gameInstance = playerGameInstances.get(req.cookies);
-  if (!joinedGameInstances.includes(gameId)) {
-    const instance = gameInstances.get(gameId);
-    if (!instance) {
+  const joinRes = chessServer.joinGame(token, gameId);
+  switch (joinRes) {
+    case OperationResult.GameFull:
+      res.status(401).write("Game is already full, try starting a new one.");
+      res.end();
+      break;
+    case OperationResult.InvalidGameId:
       res.status(400).write("Invalid game id.");
       res.end();
-      return;
-    }
-    //TODO: remove this filthy copy paste
-    if (!instance.wToken || instance.wToken === token) {
-      instance.wToken = token;
-    } else if (!instance.bToken || instance.bToken === token) {
-      instance.bToken = token;
-    } else {
-      res.write("Game is already full, try starting a new one.");
-      res.end();
-      return;
-    }
-    playerGameInstances.set(token, [...joinedGameInstances, gameId]);
-    next();
-  } else {
-    next();
+      break;
+    case OperationResult.OK:
+      next();
+      break;
   }
 };
 
@@ -128,12 +72,11 @@ app.get("/", (req, res) => {
 
 app.get("/get-current-games", (req, res) => {
   const token = req.cookies.token;
-  const gameIds: Array<string> = [];
+  let gameIdArray: Array<string> = [];
 
   if (token) {
-    if (playerGameInstances.has(token)) {
-      gameIds.push(...playerGameInstances.get(token)!);
-    }
+    const games = chessServer.playerCurrentGames(token) || [];
+    gameIdArray = games;
   }
   res.setHeader(
     "Cache-Control",
@@ -141,73 +84,28 @@ app.get("/get-current-games", (req, res) => {
   );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
-  res.json({ gameIds: gameIds });
+  res.json({ gameIds: gameIdArray });
 });
 
-app.get("/play/:gameId", validGameId, (req, res) => {
+app.get("/play/:gameId", joinGame, (req, res) => {
   res.sendFile("game.html", { root: "./out/public" });
 });
 
 //TODO: prevent spam
 app.post("/create-game", (req, res) => {
-  const token = req.cookies.token
-    ? req.cookies.token
-    : generateRandomPlayerId();
-  const gameId = generateRandomGameId();
-  serverLog(token, ": created new game");
+  const token = req.cookies.token || chessServer.generateRandomPlayerId();
+  const gameId = chessServer.createGame(token);
 
-  let bToken;
-  let wToken;
-  if (Math.round(Math.random())) wToken = token;
-  else bToken = token;
-
-  const newGameinstance = {
-    ...defaultGameInstance(),
-    id: gameId,
-    wToken: wToken,
-    bToken: bToken,
-    lastUpdate: Date.now(),
-  };
-  const UNSTARTED_GAME_CLEAR_TIME = 300000; // 5min
-  const unstartedGameClearTimeout = setTimeout(() => {
-    terminateGameInstance(newGameinstance, socketServer);
-  }, UNSTARTED_GAME_CLEAR_TIME);
-  gameInstances.set(gameId, newGameinstance);
-  const currentPlayerGames = playerGameInstances.get(token) || [];
-  playerGameInstances.set(token, [...currentPlayerGames, gameId]);
   res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
-  // .json({ token: token, gameId: gameId });
 });
 
-app.post("/join-game/:gameId", (req, res) => {
+app.post("/join-game/:gameId", joinGame, (req, res) => {
   const gameId = req.params.gameId as string;
-  if (!gameId || !gameInstances.has(gameId)) {
-    res.send("Invalid game id.");
-    res.end();
-    return;
-  }
-
-  const instance = gameInstances.get(gameId)!;
-  const token = req.cookies.token || generateRandomPlayerId();
-
-  //TODO: reformat to something not dumb
-  if (!instance.wToken || instance.wToken === token) {
-    instance.wToken = token;
-  } else if (!instance.bToken || instance.bToken === token) {
-    instance.bToken = token;
-  } else {
-    res.write("Game is already full, try starting a new one.");
-    res.end();
-  }
-  const currentPlayerGames = playerGameInstances.get(token) || [];
-  playerGameInstances.set(token, [...currentPlayerGames, gameId]);
-
-  serverLog(token, ": join game ", gameId);
-  res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
+  res.redirect("/play/" + gameId);
 });
 
 app.use(express.static(path.resolve("./out/public"), { maxAge: 3600000 }));
 
 server.listen(PORT, () => {
-  console.log("listening on localhost:" + PORT);
+  console.log("listening on port " + PORT);
 });
