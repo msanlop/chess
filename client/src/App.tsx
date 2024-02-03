@@ -10,6 +10,7 @@ import { debug } from 'console';
 import HistoryControls from './component/HistoryControls';
 import { ChatBox } from './component/ChatBox';
 import { useSocket } from './hook/useSocket';
+import { parse } from "cookie"
 
 const GAME_RESTART_TIME = 10000
 
@@ -27,7 +28,7 @@ function App() {
   const [counter, setCounter] = useState(0)
   const [playerColor, setPlayerColor] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
-  const [token, setToken] = useState('')
+  const [token, setToken] = useState( parse(window.document.cookie)["token"] || "")
 
   const socket = useSocket(token)
 
@@ -86,9 +87,9 @@ function App() {
 
     })
 
-    if(!socket.connected){
-      socket.connect()
-    }
+    // if(!socket.connected){
+      // socket.connect()
+    // }
   }, [socket])
 
   useEffect( () => setAllowedMoves(new Array(BOARD_SIZE).fill(false)), [gameStates, gameStateHistoryIndex])
@@ -160,10 +161,6 @@ function App() {
     }
     setCounter(performance.now())
   }
-  
-  
-
-
 
 
 

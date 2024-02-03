@@ -15,6 +15,7 @@ import {
   move,
   startingGameState,
 } from "./Chess/Chess";
+import { serialize, parse } from "cookie";
 
 const GAME_RESTART_TIME = 10000;
 const STALE_GAMEINSTANCE_INTERVAL = 18000000; //5h
@@ -254,7 +255,7 @@ export class ChessGameServer {
 
   //game must already be in gameInstances
   createGameStartTimeout = (gameId) => {
-    const UNSTARTED_GAME_CLEAR_TIME = 300000; // 5min
+    const UNSTARTED_GAME_CLEAR_TIME = 600000; // 5min
     const gameInstance = this.gameInstances.get(gameId);
     if (!gameInstance) return;
 
@@ -279,9 +280,13 @@ export class ChessGameServer {
     if (!gameInstance) {
       return;
     }
-    const col = gameInstance?.wToken === token ? "w" : "b";
-    const color = col === "w" ? "white" : "black";
+    if (!token) return;
+    const joinRes = this.joinGame(token, gameId);
+    if (joinRes !== OperationResult.OK)
+      this.socketServerError(gameId, token + " could not join new game");
 
+    const col = gameInstance.wToken === token ? "w" : "b";
+    const color = col === "w" ? "white" : "black";
     //keep only latest connection alive
     if (col === "w") {
       const socketId = gameInstance.wId;
@@ -357,11 +362,19 @@ export class ChessGameServer {
   setuUpSocketServer = () => {
     this.io.on("connection", (socket) => {
       const socketId = socket.id;
-      const token: string = socket.handshake.query.token as string;
+      const cookies = socket.handshake.headers.cookie;
+      if (!cookies) {
+        this.logAndEmit({
+          gameInstanceId: "",
+          type: "server-info",
+          content: "There has been an error. No token sent. ",
+        });
+        socket.disconnect();
+        return;
+      }
+      const token: string = parse(cookies)["token"] || "";
       const gameId = socket.handshake.query.gameId as string;
       const gameInstance = this.gameInstances.get(gameId);
-
-      // const gameInstance = getGameInstanceOfPlayer(token);
 
       if (!gameInstance) {
         this.logAndEmit({
@@ -506,45 +519,62 @@ export class ChessGameServer {
     return randString;
   };
 
-  joinGame = (playerId: Token, gameId: GameInstance["id"]): OperationResult => {
+  currentGames = (playerId: Token): string[] => {
+    return this.playerCurrentGames(playerId) || [];
+  };
+
+  canJoin = (playerId, gameId: GameInstance["id"]): OperationResult => {
     const instance = this.gameInstances.get(gameId);
-    if (!instance) {
-      return OperationResult.InvalidGameId;
-    }
+
+    if (this.currentGames(playerId).includes(gameId)) return OperationResult.OK;
+    if (!instance) return OperationResult.InvalidGameId;
+    if (instance.bToken && instance.wToken) return OperationResult.GameFull;
+    return OperationResult.OK;
+  };
+
+  //Put player in the game if not already in it.
+  //Returns error if the gameid is invalid or the game is full
+  joinGame = (playerId: Token, gameId: GameInstance["id"]): OperationResult => {
+    const joinStatus = this.canJoin(playerId, gameId);
+    if (joinStatus !== OperationResult.OK) return joinStatus;
+
     const playerInstances = this.playerGameInstances.get(playerId) || [];
     if (playerInstances.includes(gameId)) {
       return OperationResult.OK;
     }
-    if (instance.bToken && instance.wToken) {
-      return OperationResult.GameFull;
+
+    const instance = this.gameInstances.get(gameId)!;
+    if (instance.wToken || instance.bToken) {
+      if (instance.wToken) {
+        instance.bToken = playerId;
+      } else {
+        instance.wToken = playerId;
+      }
+    } else {
+      //no players have joined yet
+      if (Math.round(Math.random())) instance.wToken = playerId;
+    else instance.bToken = playerId;
     }
 
-    //join unstarted game
-    if (!instance.wToken) instance.wToken = playerId;
-    else instance.bToken = playerId;
     this.playerGameInstances.set(playerId, [...playerInstances, gameId]);
     return OperationResult.OK;
   };
 
-  createGame = (playerId: Token): GameInstance["id"] => {
-    let bToken;
-    let wToken;
-    if (Math.round(Math.random())) wToken = playerId;
-    else bToken = playerId;
+  createGame = (timerVal: number): GameInstance["id"] => {
     const newGameId = this.generateRandomGameId();
 
+    const timerMs = timerVal * 60 * 1000;
+    const instance = { ...defaultGameInstance() };
+    // instance.gameStates[0].bTimeLeft = timerMs;
+    // instance.gameStates[0].wTimeLeft = timerMs;
+    //TODO: is referencing even worth?
     const newGameinstance = {
-      ...defaultGameInstance(),
+      ...instance,
       id: newGameId,
-      wToken: wToken,
-      bToken: bToken,
       lastUpdate: Date.now(),
     };
     this.gameInstances.set(newGameId, newGameinstance);
     newGameinstance.timerTimeoutId = this.createGameStartTimeout(newGameId);
-
-    const currentPlayerGames = this.playerGameInstances.get(playerId) || [];
-    this.playerGameInstances.set(playerId, [...currentPlayerGames, newGameId]);
 
     return newGameId;
   };

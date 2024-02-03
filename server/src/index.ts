@@ -40,15 +40,12 @@ const TOKEN_MAX_AGE = 21600000;
 // const socketServer = initSocket(server);
 const chessServer = ChessGameServer.getChessServer(server);
 
-const joinGame = (req, res, next) => {
-  let token = req.cookies.token;
-  if (!token) {
-    token = chessServer.generateRandomPlayerId();
-  }
-  res.cookie("token", token, { maxAge: TOKEN_MAX_AGE });
+const canJoin = (req, res, next) => {
+  let token = req.cookies.token || "";
   const gameId = req.params.gameId;
-  const joinRes = chessServer.joinGame(token, gameId);
-  switch (joinRes) {
+  // const joinRes = chessServer.joinGame(token, gameId);
+  const canJoin = chessServer.canJoin(token, gameId);
+  switch (canJoin) {
     case OperationResult.GameFull:
       res.status(401).write("Game is already full, try starting a new one.");
       res.end();
@@ -74,9 +71,11 @@ app.get("/get-current-games", (req, res) => {
   const token = req.cookies.token;
   let gameIdArray: Array<string> = [];
 
+  let games;
   if (token) {
-    const games = chessServer.playerCurrentGames(token) || [];
-    gameIdArray = games;
+    games = chessServer.currentGames(token);
+  } else {
+    games = [];
   }
   res.setHeader(
     "Cache-Control",
@@ -96,12 +95,27 @@ app.post("/create-game", (req, res) => {
   const token = req.cookies.token || chessServer.generateRandomPlayerId();
   const gameId = chessServer.createGame(token);
 
-  res.cookie("token", token, { maxAge: 43200000 }).redirect("/play/" + gameId);
+  res.redirect("/play/" + gameId);
 });
 
-app.post("/join-game/:gameId", joinGame, (req, res) => {
+app.post("/join-game/:gameId", canJoin, (req, res) => {
   const gameId = req.params.gameId as string;
   res.redirect("/play/" + gameId);
+});
+
+app.post("/:gameId/token", (req, res) => {
+  const token = req.cookies.token || chessServer.generateRandomPlayerId();
+  const joinRes = chessServer.joinGame(token, req.params.gameId);
+  if (joinRes === OperationResult.OK) {
+    res.cookie("token", token).status(200);
+    res.end();
+  } else {
+    res.status(400).send("Could not join game");
+  }
+});
+
+app.get("/play/:gameId", canJoin, (req, res) => {
+  res.sendFile("game.html", { root: "./out/public" });
 });
 
 app.use(express.static(path.resolve("./out/public"), { maxAge: 3600000 }));
