@@ -86,14 +86,11 @@ app.get("/get-current-games", (req, res) => {
   res.json({ gameIds: gameIdArray });
 });
 
-app.get("/play/:gameId", joinGame, (req, res) => {
-  res.sendFile("game.html", { root: "./out/public" });
-});
-
 //TODO: prevent spam
 app.post("/create-game", (req, res) => {
   const token = req.cookies.token || chessServer.generateRandomPlayerId();
-  const gameId = chessServer.createGame(token);
+  const timerVal = req.body["create-game-timer"];
+  const gameId = chessServer.createGame(timerVal);
 
   res.redirect("/play/" + gameId);
 });
