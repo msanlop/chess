@@ -2,6 +2,8 @@
     position: relative;
     align-content: left;
     margin-top: 3%;
+    display: flex;
+    flex-flow: column-reverse;
     /* height: 40vw; */
     width: 25vw;
     height: 60vh;
@@ -9,7 +11,6 @@
     overflow-y: scroll;
     scrollbar-width: none; /* Firefox scrollbar */
 
-    white-space: nowrap;
     overflow-x: hidden;
     height: 500px;
 
@@ -45,8 +46,8 @@
 .chat-feed p {
     position: relative;
     text-align: left;
-    padding: 3%;
-    width: 100%;
+    margin: 3%;
+    /* width: 100%; */
 }
 
 #info {

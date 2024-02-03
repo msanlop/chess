@@ -18,8 +18,8 @@ export const ChatBox = (props:ChatProps) =>  {
 
     
     useEffect(() => {
-        socket?.on("newChat", (msg : string) => {setMessages([...messagesRef.current, ['chat', msg]])})
-        socket?.on("newInfo", (msg : string) => setMessages([...messagesRef.current, ['info', msg]]))
+        socket?.on("newChat", (msg : string) => {setMessages([['chat', msg], ...messagesRef.current])})
+        socket?.on("newInfo", (msg : string) => setMessages([['info', msg], ...messagesRef.current]))
     }, [props.connected])
 
     const sendMessage = (form : any) => {
@@ -36,7 +36,7 @@ export const ChatBox = (props:ChatProps) =>  {
         //     setMessages([...messagesRef.current, ['info', "Could not reach the server. Try reloading the page or creating a new game."]])
         // }
         if(socket.active && !socket.connected){
-            setMessages([...messagesRef.current, ['info', "Trying to connect to the server..."]])
+            setMessages([['info', "Trying to connect to the server..."], ...messagesRef.current])
         }
         
     }, [socket, props.connected])
@@ -46,9 +46,10 @@ export const ChatBox = (props:ChatProps) =>  {
     let endOfFeed : HTMLDivElement | null;
     //scroll to invisible last element (https://stackoverflow.com/questions/37620694/how-to-scroll-to-bottom-in-react)
     const scrollToBottom = () => {
-        endOfFeed?.scrollIntoView({ behavior: "smooth" });
-    }
+        // endOfFeed?.scrollIntoView({ behavior: "smooth" });
+        if (endOfFeed) endOfFeed.scrollTop = endOfFeed.scrollHeight;
 
+    }
     return(
         <div>
             <div className="chat-feed">
