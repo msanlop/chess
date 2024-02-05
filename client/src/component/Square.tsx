@@ -68,8 +68,8 @@ const Square : FC<TileInformation> = (props : TileInformation)  => {
         if(props.draggingCoords) {
             setPosition({
                 position:"fixed",
-                top:props.draggingCoords.y - HALF_ICON_SIZE,
-                left:props.draggingCoords.x - HALF_ICON_SIZE,
+                top:props.draggingCoords.y - window.scrollY - HALF_ICON_SIZE,
+                left:props.draggingCoords.x - window.scrollX - HALF_ICON_SIZE,
                 zIndex: 100,
             })            
         } else {
