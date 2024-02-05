@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import Board from "./component/Board"
-import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, starterPosition, move, getPiece, GameState, startingGameState, STARTING_TIME} from "./Chess/Chess"
+import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, move, getPiece, GameState, startingGameState, STARTING_TIME, Move} from "./Chess/Chess"
 // import InfoPanel from "./Components/InfoPanel"
 // import Timer from './Timer';
 import {io, Socket} from "socket.io-client"
@@ -69,6 +69,12 @@ function App() {
     })
 
     socket.on("newState", newState => {
+      //forget this happened
+      const newMove: Move = newState.move;
+      newState.board = move(newMove, gameStates.at(gameStates.length-1)!).board
+      delete newState.move
+
+      // const board = move(move, )
       setGameStateHistoryIndex(gameStates.length)
       gameStates.push(newState)
       setGameStates(gameStates)      
@@ -127,7 +133,7 @@ function App() {
     else{
       if(socket){
         //TODO: move piece before server anwser
-        socket.emit("move", selectedPieceCoords, coords, (response:any) => {
+        socket.emit("move", {from:selectedPieceCoords, to:coords}, (response:any) => {
           setAllowedMoves(new Array(BOARD_SIZE).fill(false))
         })
       }

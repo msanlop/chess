@@ -4,7 +4,8 @@ export const STARTING_TIME = 300000;
 export const ALGEBRAIC_X_AXIS = ["a", "b", "c", "d", "e", "f", "g", "h"];
 export const ALGEBRAIC_Y_AXIS = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
-export const starterPosition: (Piece | null)[] = [
+// prettier-ignore
+export const starterPosition: Board = [
   { type: "r", color: "b" },
   { type: "k", color: "b" },
   { type: "b", color: "b" },
@@ -21,38 +22,10 @@ export const starterPosition: (Piece | null)[] = [
   { type: "p", color: "b" },
   { type: "p", color: "b" },
   { type: "p", color: "b" },
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
+  null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,
+  null,null,null,null,null,null,null,null,
   { type: "p", color: "w" },
   { type: "p", color: "w" },
   { type: "p", color: "w" },
@@ -81,13 +54,16 @@ export interface Coordinate {
   readonly y: number;
 }
 
-export interface Board {
-  readonly board: (Piece | null)[];
+export type Board = (Piece | null)[];
+
+export interface Move {
+  from: Coordinate;
+  to: Coordinate;
 }
 
 export interface GameState {
   readonly turn: string; // boolean?
-  readonly board: (Piece | null)[];
+  board: (Piece | null)[];
   readonly check: boolean;
   readonly finished: boolean;
   readonly stalemate: boolean;
@@ -234,7 +210,10 @@ const isCheck = (state: GameState, player: string): boolean => {
   for (const dir of directions.diagonal) {
     threatCoords = { x: x, y: y };
     while (true) {
-      threatCoords = { x: threatCoords.x + dir[0], y: threatCoords.y + dir[1] };
+      threatCoords = {
+        x: threatCoords.x + dir[0],
+        y: threatCoords.y + dir[1],
+      };
       const p = getPiece(threatCoords, state);
       if (p === null) {
         continue;
@@ -255,7 +234,10 @@ const isCheck = (state: GameState, player: string): boolean => {
     while (true) {
       // let newX = x + dir[0]
       // let newY = y + dir[1]
-      threatCoords = { x: threatCoords.x + dir[0], y: threatCoords.y + dir[1] };
+      threatCoords = {
+        x: threatCoords.x + dir[0],
+        y: threatCoords.y + dir[1],
+      };
       const p = getPiece(threatCoords, state);
       if (p === null) {
         continue;
@@ -312,7 +294,7 @@ const hasNoAllowedMoves = (state: GameState, player: string) => {
   return true;
 };
 
-export const isGameFinished = () => {
+const isGameFinished = () => {
   return false;
 };
 
@@ -347,7 +329,10 @@ const checkIfStepInDirectionAllowedForPiece = (
   movesRef: boolean[]
 ): Coordinate | null => {
   let newCoords = { ...coords };
-  newCoords = { x: newCoords.x + direction[0], y: newCoords.y + direction[1] };
+  newCoords = {
+    x: newCoords.x + direction[0],
+    y: newCoords.y + direction[1],
+  };
   if (isOutOfBounds(newCoords)) {
     return null;
   }
@@ -571,8 +556,7 @@ export const getAllowedMovesForPieceAtCoordinate = (
 
 //get a board but with the from piece in to's position
 const getBoardWithMovedPiece = (
-  from: Coordinate,
-  to: Coordinate,
+  { from, to }: Move,
   board: (Piece | null)[]
 ) => {
   const newBoard = [...board]; //how to typedef instead of this
@@ -611,13 +595,8 @@ export const getUpdateTimers = (state: GameState) => {
  * @param state game state
  * @returns new game state after the move
  */
-export const move = (
-  from: Coordinate,
-  to: Coordinate,
-  state: GameState
-): GameState => {
-  //TODO: check move is allowed for server purposes??
-  let newBoard = getBoardWithMovedPiece(from, to, state.board);
+export const move = ({ from, to }: Move, state: GameState): GameState => {
+  let newBoard = getBoardWithMovedPiece({ from, to }, state.board);
   // const newBoard = [...state.board]
   // const piece = newBoard[from.x + BOARD_SIZE*from.y];
   // newBoard[to.x + BOARD_SIZE*to.y] = piece;
@@ -638,14 +617,12 @@ export const move = (
     bCatsle = [false, false];
     if (to.x === 2 && to.y === 0) {
       newBoard = getBoardWithMovedPiece(
-        { x: 0, y: 0 },
-        { x: 3, y: 0 },
+        { to: { x: 0, y: 0 }, from: { x: 3, y: 0 } },
         newBoard
       );
     } else if (to.x === 6 && to.y === 0) {
       newBoard = getBoardWithMovedPiece(
-        { x: 7, y: 0 },
-        { x: 5, y: 0 },
+        { from: { x: 7, y: 0 }, to: { x: 5, y: 0 } },
         newBoard
       );
     }
@@ -658,14 +635,12 @@ export const move = (
     wCatsle = [false, false];
     if (to.x === 2 && to.y === 7) {
       newBoard = getBoardWithMovedPiece(
-        { x: 0, y: 7 },
-        { x: 3, y: 7 },
+        { from: { x: 0, y: 7 }, to: { x: 3, y: 7 } },
         newBoard
       );
     } else if (to.x === 6 && to.y === 7) {
       newBoard = getBoardWithMovedPiece(
-        { x: 7, y: 7 },
-        { x: 5, y: 7 },
+        { from: { x: 7, y: 7 }, to: { x: 5, y: 7 } },
         newBoard
       );
     }

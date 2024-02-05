@@ -12,6 +12,7 @@ import {
   GameState,
   getAllowedMovesForPieceAtCoordinate,
   getUpdateTimers,
+  Move,
   move,
   startingGameState,
 } from "./Chess/Chess";
@@ -33,6 +34,10 @@ export interface GameInstance {
   gameIsStarted: boolean;
   timerTimeoutId?: NodeJS.Timeout;
   lastUpdate: number;
+}
+
+interface ServerGameState extends GameState {
+  move: Move;
 }
 
 export const defaultGameInstance = (): GameInstance => {
@@ -419,7 +424,7 @@ export class ChessGameServer {
         });
       });
 
-      socket.on("move", (from: Coordinate, to: Coordinate, callback) => {
+      socket.on("move", ({ from, to }: Move, callback) => {
         const lastState = this.getLastGameState(gameInstance);
         const expectedSocket = gameInstance[lastState.turn + "Id"];
         if (expectedSocket !== socketId) {
@@ -447,8 +452,11 @@ export class ChessGameServer {
             " to " +
             coordinateToAlgebraic(to),
         });
-        const newState = move(from, to, this.getLastGameState(gameInstance));
-        gameInstance.gameStates.push(newState);
+        const newState: ServerGameState = {
+          ...move({ from, to }, this.getLastGameState(gameInstance)),
+          move: { from, to },
+        };
+        gameInstance.gameStates[0] = newState; //FIXME: don't keep history on server
         gameInstance.lastUpdate = Date.now();
         if (newState.finished) {
           this.io.to(gameInstance.id.toString()).emit("newState", newState);
@@ -459,7 +467,9 @@ export class ChessGameServer {
             this.restartGameInstance(gameInstance.id);
           }, newState[newState.turn + "TimeLeft"]);
           gameInstance.timerTimeoutId = newTimeout;
-          this.io.to(gameInstance.id.toString()).emit("newState", newState);
+          this.io
+            .to(gameInstance.id.toString())
+            .emit("newState", { ...newState, board: [] });
         }
         callback({ status: "ok" });
       });
@@ -553,7 +563,7 @@ export class ChessGameServer {
     } else {
       //no players have joined yet
       if (Math.round(Math.random())) instance.wToken = playerId;
-    else instance.bToken = playerId;
+      else instance.bToken = playerId;
     }
 
     this.playerGameInstances.set(playerId, [...playerInstances, gameId]);
