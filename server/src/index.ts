@@ -1,29 +1,8 @@
 import * as http from "http";
 import express from "express";
-import test from "node:test";
-import { escape } from "querystring";
-import { Server } from "socket.io";
-import { idText } from "typescript";
-import {
-  BOARD_SIZE,
-  Coordinate,
-  coordinateToAlgebraic,
-  GameState,
-  getAllowedMovesForPieceAtCoordinate,
-  getUpdateTimers,
-  move,
-  startingGameState,
-} from "./Chess/Chess";
-import {
-  defaultGameInstance,
-  GameInstance,
-  ChessGameServer,
-  OperationResult,
-} from "./ChessGameServer";
+import { ChessGameServer, OperationResult } from "./ChessGameServer";
 import path from "path";
-import crypto from "crypto";
 import bodyParser from "body-parser";
-import { router } from "websocket";
 import cookieParser from "cookie-parser";
 
 const PORT = 8080;
@@ -35,13 +14,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 
-const TOKEN_MAX_AGE = 21600000;
-
 // const socketServer = initSocket(server);
 const chessServer = ChessGameServer.getChessServer(server);
 
 const canJoin = (req, res, next) => {
-  let token = req.cookies.token || "";
+  const token = req.cookies.token || "";
   const gameId = req.params.gameId;
   // const joinRes = chessServer.joinGame(token, gameId);
   const canJoin = chessServer.canJoin(token, gameId);
@@ -69,7 +46,6 @@ app.get("/", (req, res) => {
 
 app.get("/get-current-games", (req, res) => {
   const token = req.cookies.token;
-  let gameIdArray: Array<string> = [];
 
   let games;
   if (token) {
@@ -83,12 +59,11 @@ app.get("/get-current-games", (req, res) => {
   );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
-  res.json({ gameIds: gameIdArray });
+  res.json({ gameIds: games });
 });
 
 //TODO: prevent spam
 app.post("/create-game", (req, res) => {
-  const token = req.cookies.token || chessServer.generateRandomPlayerId();
   const timerVal = req.body["create-game-timer"];
   const gameId = chessServer.createGame(timerVal);
 

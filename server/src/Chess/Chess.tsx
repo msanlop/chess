@@ -294,14 +294,9 @@ const hasNoAllowedMoves = (state: GameState, player: string) => {
   return true;
 };
 
-const isGameFinished = () => {
-  return false;
-};
-
 const pawnIsInStartingPosition = (
   coords: Coordinate,
-  piece: Piece,
-  state: GameState
+  piece: Piece
 ): boolean => {
   return (
     (piece.color === "w" && coords.y === 6) ||
@@ -369,7 +364,7 @@ const checkAllowedMovesInDirectionForPiece = (
 ): void => {
   let newCoords = { ...coords };
   for (let i = 0; i < maximumSteps; i++) {
-    let nextCoords = checkIfStepInDirectionAllowedForPiece(
+    const nextCoords = checkIfStepInDirectionAllowedForPiece(
       newCoords,
       piece,
       state,
@@ -478,9 +473,7 @@ export const getAllowedMovesForPieceAtCoordinate = (
       );
       for (const direction of pawnDirections) {
         let newCoords = { ...coords };
-        const numberOfMoves = pawnIsInStartingPosition(coords, piece, state)
-          ? 2
-          : 1;
+        const numberOfMoves = pawnIsInStartingPosition(coords, piece) ? 2 : 1;
         checkAllowedMovesInDirectionForPiece(
           numberOfMoves,
           coords,

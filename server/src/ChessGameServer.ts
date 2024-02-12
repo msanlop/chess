@@ -1,13 +1,7 @@
-import * as http from "http";
-import * as express from "express";
-import test from "node:test";
-import { escape } from "querystring";
 import { Server } from "socket.io";
 import { randomBytes } from "crypto";
-import { idText } from "typescript";
 import {
   BOARD_SIZE,
-  Coordinate,
   coordinateToAlgebraic,
   GameState,
   getAllowedMovesForPieceAtCoordinate,
@@ -16,7 +10,7 @@ import {
   move,
   startingGameState,
 } from "./Chess/Chess";
-import { serialize, parse } from "cookie";
+import { parse } from "cookie";
 
 const GAME_RESTART_TIME = 10000;
 const STALE_GAMEINSTANCE_INTERVAL = 18000000; //5h
@@ -158,7 +152,7 @@ export class ChessGameServer {
   getLastGameState = (gameInstance: GameInstance) =>
     gameInstance.gameStates[gameInstance.gameStates.length - 1];
 
-  private constructor(httpServer: http.Server) {
+  private constructor(httpServer) {
     this.io = new Server(httpServer, {
       cors: {
         origin: "*",
@@ -456,7 +450,7 @@ export class ChessGameServer {
           ...move({ from, to }, this.getLastGameState(gameInstance)),
           move: { from, to },
         };
-        gameInstance.gameStates[0] = newState; //FIXME: don't keep history on server
+        gameInstance.gameStates[0] = newState;
         gameInstance.lastUpdate = Date.now();
         if (newState.finished) {
           this.io.to(gameInstance.id.toString()).emit("newState", newState);
@@ -515,7 +509,7 @@ export class ChessGameServer {
     const TOKEN_LENGTH = 4;
     let randString;
     do {
-      randString = randomBytes(TOKEN_LENGTH).toString("hex");
+      randString = randomBytes(TOKEN_LENGTH).toString("base64url");
     } while (this.playerGameInstances.has(randString));
     return randString;
   };
@@ -524,7 +518,7 @@ export class ChessGameServer {
     const TOKEN_LENGTH = 4;
     let randString;
     do {
-      randString = randomBytes(TOKEN_LENGTH).toString("hex");
+      randString = randomBytes(TOKEN_LENGTH).toString("base64url");
     } while (this.gameInstances.has(randString));
     return randString;
   };
