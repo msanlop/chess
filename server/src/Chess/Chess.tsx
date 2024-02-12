@@ -1,5 +1,4 @@
 export const BOARD_SIZE = 8;
-export const STARTING_TIME = 300000;
 
 export const ALGEBRAIC_X_AXIS = ["a", "b", "c", "d", "e", "f", "g", "h"];
 export const ALGEBRAIC_Y_AXIS = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -91,16 +90,18 @@ const genericGameState: GameState = {
   bCanCastle: [true, true],
 };
 
-export const startingGameState: GameState = {
-  board: starterPosition,
-  turn: "w",
-  check: false,
-  finished: false,
-  stalemate: false,
-  wTimeLeft: STARTING_TIME,
-  bTimeLeft: STARTING_TIME,
-  wCanCastle: [true, true],
-  bCanCastle: [true, true],
+export const startingGameState = (startingTime: number): GameState => {
+  return {
+    board: JSON.parse(JSON.stringify(starterPosition)),
+    turn: "w",
+    check: false,
+    finished: false,
+    stalemate: false,
+    wTimeLeft: startingTime,
+    bTimeLeft: startingTime,
+    wCanCastle: [true, true],
+    bCanCastle: [true, true],
+  };
 };
 
 // const directions : Map<string, number[][]> = new Map([

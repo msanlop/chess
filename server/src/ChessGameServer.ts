@@ -28,23 +28,25 @@ export interface GameInstance {
   gameIsStarted: boolean;
   timerTimeoutId?: NodeJS.Timeout;
   lastUpdate: number;
+  startingTime: number;
 }
 
 interface ServerGameState extends GameState {
   move: Move;
 }
 
-export const defaultGameInstance = (): GameInstance => {
+export const defaultGameInstance = (startingTime): GameInstance => {
   return JSON.parse(
     JSON.stringify({
       wToken: undefined,
       bToken: undefined,
       wId: undefined,
       bId: undefined,
-      gameStates: [{ ...startingGameState }], //CHECK
+      gameStates: [{ ...startingGameState(startingTime) }], //CHECK
       gameIsStarted: false,
       id: "0",
       lastUpdate: -1,
+      startingTime: startingTime,
     })
   );
 };
@@ -235,7 +237,7 @@ export class ChessGameServer {
       this.disconnectOldSocketIfExisting(instance.wId);
       this.disconnectOldSocketIfExisting(instance.bId);
       const restatedInstance: GameInstance = {
-        ...defaultGameInstance(),
+        ...defaultGameInstance(instance.startingTime),
         wToken: instance.wToken,
         id: instance.id,
         lastUpdate: Date.now(),
@@ -509,7 +511,7 @@ export class ChessGameServer {
     const TOKEN_LENGTH = 4;
     let randString;
     do {
-      randString = randomBytes(TOKEN_LENGTH).toString("base64url");
+      randString = randomBytes(TOKEN_LENGTH).toString("hex");
     } while (this.playerGameInstances.has(randString));
     return randString;
   };
@@ -518,7 +520,7 @@ export class ChessGameServer {
     const TOKEN_LENGTH = 4;
     let randString;
     do {
-      randString = randomBytes(TOKEN_LENGTH).toString("base64url");
+      randString = randomBytes(TOKEN_LENGTH).toString("hex");
     } while (this.gameInstances.has(randString));
     return randString;
   };
@@ -568,10 +570,7 @@ export class ChessGameServer {
     const newGameId = this.generateRandomGameId();
 
     const timerMs = timerVal * 60 * 1000;
-    const instance = { ...defaultGameInstance() };
-    // instance.gameStates[0].bTimeLeft = timerMs;
-    // instance.gameStates[0].wTimeLeft = timerMs;
-    //TODO: is referencing even worth?
+    const instance = { ...defaultGameInstance(timerMs) };
     const newGameinstance = {
       ...instance,
       id: newGameId,
