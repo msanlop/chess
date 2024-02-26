@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import Board from "./component/Board"
-import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, move, getPiece, GameState, startingGameState, STARTING_TIME, Move} from "./Chess/Chess"
+import {BOARD_SIZE, Coordinate, getAllowedMovesForPieceAtCoordinate, move, getPiece, STARTING_TIME, GameState, startingGameState, Move} from "./Chess/Chess"
 // import InfoPanel from "./Components/InfoPanel"
 // import Timer from './Timer';
-import {io, Socket} from "socket.io-client"
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import { debug } from 'console';
 import HistoryControls from './component/HistoryControls';
 import { ChatBox } from './component/ChatBox';
 import { useSocket } from './hook/useSocket';
@@ -20,7 +17,7 @@ function App() {
 
   const [selectedPieceCoords, setSelectedPiece] = useState<Coordinate>({x : 0, y : 0})
   const [gameStateHistoryIndex,setGameStateHistoryIndex] = useState(0)
-  const [gameStates, setGameStates] = useState<GameState[]>([{...startingGameState, wTimeLeft:5000}])
+  const [gameStates, setGameStates] = useState<GameState[]>([{...startingGameState(0, 0), wTimeLeft:5000}])
   const [allowed, setAllowedMoves] = useState(new Array(BOARD_SIZE*BOARD_SIZE).fill(false))
   const [draggingPiece, setDraggingPiece] = useState(false)
   const [timers, setTimers] = useState({w:STARTING_TIME, b:STARTING_TIME})
@@ -85,7 +82,7 @@ function App() {
       setPlaying(false)
       setTimeout(() => {
         setGameStateHistoryIndex(0)
-        setGameStates([startingGameState])
+        setGameStates([startingGameState(0,0)])
         socket.connect()
 
       }, GAME_RESTART_TIME + 2000)

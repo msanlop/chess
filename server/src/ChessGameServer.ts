@@ -29,24 +29,29 @@ export interface GameInstance {
   timerTimeoutId?: NodeJS.Timeout;
   lastUpdate: number;
   startingTime: number;
+  incrementTime: number;
 }
 
 interface ServerGameState extends GameState {
   move: Move;
 }
 
-export const defaultGameInstance = (startingTime): GameInstance => {
+export const defaultGameInstance = (
+  startingTime,
+  incrementTime
+): GameInstance => {
   return JSON.parse(
     JSON.stringify({
       wToken: undefined,
       bToken: undefined,
       wId: undefined,
       bId: undefined,
-      gameStates: [{ ...startingGameState(startingTime) }], //CHECK
+      gameStates: [{ ...startingGameState(startingTime, incrementTime) }], //CHECK
       gameIsStarted: false,
       id: "0",
       lastUpdate: -1,
       startingTime: startingTime,
+      incrementTime: incrementTime,
     })
   );
 };
@@ -237,7 +242,7 @@ export class ChessGameServer {
       this.disconnectOldSocketIfExisting(instance.wId);
       this.disconnectOldSocketIfExisting(instance.bId);
       const restatedInstance: GameInstance = {
-        ...defaultGameInstance(instance.startingTime),
+        ...defaultGameInstance(instance.startingTime, instance.incrementTime),
         wToken: instance.wToken,
         id: instance.id,
         lastUpdate: Date.now(),
@@ -452,6 +457,8 @@ export class ChessGameServer {
           ...move({ from, to }, this.getLastGameState(gameInstance)),
           move: { from, to },
         };
+        console.log("white :" + newState.wTimeLeft);
+        console.log("black: " + newState.bTimeLeft);
         gameInstance.gameStates[0] = newState;
         gameInstance.lastUpdate = Date.now();
         if (newState.finished) {
@@ -566,11 +573,11 @@ export class ChessGameServer {
     return OperationResult.OK;
   };
 
-  createGame = (timerVal: number): GameInstance["id"] => {
+  createGame = (timerVal: number, incrementVal: number): GameInstance["id"] => {
     const newGameId = this.generateRandomGameId();
 
     const timerMs = timerVal * 60 * 1000;
-    const instance = { ...defaultGameInstance(timerMs) };
+    const instance = { ...defaultGameInstance(timerMs, incrementVal) };
     const newGameinstance = {
       ...instance,
       id: newGameId,

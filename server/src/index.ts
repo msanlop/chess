@@ -64,8 +64,9 @@ app.get("/get-current-games", (req, res) => {
 
 //TODO: prevent spam
 app.post("/create-game", (req, res) => {
-  const timerVal = req.body["create-game-timer"];
-  const gameId = chessServer.createGame(timerVal);
+  const timerVal = parseInt(req.body["create-game-timer"]);
+  const incrVal = parseInt(req.body["create-game-incr"]);
+  const gameId = chessServer.createGame(timerVal, incrVal);
 
   res.redirect("/play/" + gameId);
 });

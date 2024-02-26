@@ -73,6 +73,7 @@ export interface GameState {
   readonly bTimeLeft: number;
   readonly wCanCastle: boolean[];
   readonly bCanCastle: boolean[];
+  readonly incrementTime: number;
 
   // times ?: number; //timers??
 }
@@ -89,18 +90,25 @@ const genericGameState: GameState = {
   bTimeLeft: 1000,
   wCanCastle: [true, true],
   bCanCastle: [true, true],
+  incrementTime: 0,
 };
 
-export const startingGameState: GameState = {
-  board: starterPosition,
-  turn: "w",
-  check: false,
-  finished: false,
-  stalemate: false,
-  wTimeLeft: STARTING_TIME,
-  bTimeLeft: STARTING_TIME,
-  wCanCastle: [true, true],
-  bCanCastle: [true, true],
+export const startingGameState = (
+  startingTime: number,
+  increment: number
+): GameState => {
+  return {
+    board: JSON.parse(JSON.stringify(starterPosition)),
+    turn: "w",
+    check: false,
+    finished: false,
+    stalemate: false,
+    wTimeLeft: startingTime,
+    bTimeLeft: startingTime,
+    wCanCastle: [true, true],
+    bCanCastle: [true, true],
+    incrementTime: increment,
+  };
 };
 
 // const directions : Map<string, number[][]> = new Map([
@@ -566,10 +574,16 @@ export const getUpdateTimers = (state: GameState) => {
   let wNewLastMoveTime = state.wLastMoveTime;
   if (state.turn == "w") {
     wNewLastMoveTime = Date.now();
-    wNewTimeLeft = wNewTimeLeft - (wNewLastMoveTime - bNewLastMoveTime!);
+    wNewTimeLeft =
+      wNewTimeLeft -
+      (wNewLastMoveTime - bNewLastMoveTime!) +
+      state.incrementTime;
   } else {
     bNewLastMoveTime = Date.now();
-    bNewTimeLeft = bNewTimeLeft - (bNewLastMoveTime - wNewLastMoveTime!);
+    bNewTimeLeft =
+      bNewTimeLeft -
+      (bNewLastMoveTime - wNewLastMoveTime!) +
+      state.incrementTime;
   }
 
   return {
@@ -650,5 +664,6 @@ export const move = ({ from, to }: Move, state: GameState): GameState => {
     ...getUpdateTimers(state),
     wCanCastle: wCatsle,
     bCanCastle: bCatsle,
+    incrementTime: state.incrementTime,
   };
 };
