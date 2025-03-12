@@ -610,12 +610,12 @@ export const move = ({ from, to }: Move, state: GameState): GameState => {
     bCatsle = [false, false];
     if (to.x === 2 && to.y === 0) {
       newBoard = getBoardWithMovedPiece(
-        { to: { x: 0, y: 0 }, from: { x: 3, y: 0 } },
+        { from: { x: 0, y: 0 }, to: { x: 3, y: 0 } },
         newBoard
       );
     } else if (to.x === 6 && to.y === 0) {
       newBoard = getBoardWithMovedPiece(
-        { from: { x: 7, y: 0 }, to: { x: 5, y: 0 } },
+        { from: { x: 7, y: 0 }, to: { x: 4, y: 0 } },
         newBoard
       );
     }
@@ -633,7 +633,7 @@ export const move = ({ from, to }: Move, state: GameState): GameState => {
       );
     } else if (to.x === 6 && to.y === 7) {
       newBoard = getBoardWithMovedPiece(
-        { from: { x: 7, y: 7 }, to: { x: 5, y: 7 } },
+        { from: { x: 7, y: 7 }, to: { x: 4, y: 7 } },
         newBoard
       );
     }
