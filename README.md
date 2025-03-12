@@ -1,14 +1,17 @@
+https://github.com/user-attachments/assets/16a13b7f-ff18-4c82-a1a3-32f4c169dead
+
 # Yet another chess game 
 
 This is a very primitive chess server that allows for players to create and join games against other players. It started as simple local React chess game that I started after going through React's official Tic-Tac-Toe to learn more about frontend developpement.   
 
 I decided to go a bit further to get to know some more technologies, namely, Typescript, websockets (Socket.io), Docker, and other server tools (Cloudflare, Nginx, Let's Encrypt (certbot)).
 
-### Installation
-
-The server runs on port 8080 by default (change in server/src/index.ts)
-
-#### With docker
+## Installation
+### Docker
+```bash
+docker run -d --rm -p 8080:8080 --name chess msanlop/chess-ts 
+```
+#### From `Dockerfile`
 ```bash
 git clone git@github.com:msanlop/chess.git
 cd chess
@@ -28,13 +31,16 @@ docker run -d -p 8080:8080 --name chess ts-chess
 I haven't tested this... Maybe you have to mount the code in a volume, and also install git and other stuff, idk -->
 
 
-#### Without docker
+### Without docker
+Change default port `8080` in `server/src/index.ts`
 ```bash
 git clone git@github.com:msanlop/chess.git
 cd chess
 cd client
+npm install
 npm run build
 cd ../server
+npm install
 npm start
 ```
 
